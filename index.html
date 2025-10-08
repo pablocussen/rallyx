@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mini Rally-X</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #111;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        canvas {
+            border: 2px solid #fff;
+            background-color: #000;
+        }
+        h1 {
+            margin-bottom: 10px;
+        }
+        p {
+            margin-top: 5px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Mini Rally-X</h1>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <p id="infoText">Banderas restantes: 10 | USA LAS FLECHAS PARA MOVERTE</p>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const infoText = document.getElementById('infoText');
+
+        const TILE_SIZE = 40;
+
+        // Jugador
+        const player = {
+            x: TILE_SIZE * 2,
+            y: TILE_SIZE * 2,
+            size: TILE_SIZE * 0.8,
+            speed: 4,
+            color: '#0099ff'
+        };
+
+        // Banderas
+        let flags = [];
+        const FLAG_COUNT = 10;
+        
+        // Enemigos
+        let enemies = [];
+        const ENEMY_COUNT = 4;
+
+        function setupGame() {
+            // Resetear y colocar banderas aleatoriamente
+            flags = [];
+            for (let i = 0; i < FLAG_COUNT; i++) {
+                flags.push({
+                    x: Math.floor(Math.random() * (canvas.width / TILE_SIZE)) * TILE_SIZE + TILE_SIZE * 0.1,
+                    y: Math.floor(Math.random() * (canvas.height / TILE_SIZE)) * TILE_SIZE + TILE_SIZE * 0.1,
+                    size: TILE_SIZE * 0.8,
+                    color: '#ffd700'
+                });
+            }
+
+            // Resetear y colocar enemigos
+            enemies = [];
+            for (let i = 0; i < ENEMY_COUNT; i++) {
+                enemies.push({
+                    x: canvas.width - TILE_SIZE * (3 + i * 2),
+                    y: canvas.height - TILE_SIZE * (3 + i * 2),
+                    size: TILE_SIZE * 0.8,
+                    speed: 1 + Math.random(),
+                    color: '#ff4136',
+                    dx: Math.random() > 0.5 ? 1 : -1, // Dirección inicial
+                    dy: Math.random() > 0.5 ? 1 : -1
+                });
+            }
+             updateInfoText();
+        }
+
+
+        // Controles
+        const keys = {
+            ArrowUp: false,
+            ArrowDown: false,
+            ArrowLeft: false,
+            ArrowRight: false
+        };
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key in keys) keys[e.key] = true;
+        });
+        window.addEventListener('keyup', (e) => {
+            if (e.key in keys) keys[e.key] = false;
+        });
+
+        function updatePlayerPosition() {
+            if (keys.ArrowUp && player.y > 0) player.y -= player.speed;
+            if (keys.ArrowDown && player.y < canvas.height - player.size) player.y += player.speed;
+            if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
+            if (keys.ArrowRight && player.x < canvas.width - player.size) player.x += player.speed;
+        }
+
+        function updateEnemies() {
+            enemies.forEach(enemy => {
+                enemy.x += enemy.speed * enemy.dx;
+                enemy.y += enemy.speed * enemy.dy;
+
+                // Rebotar en los bordes
+                if (enemy.x <= 0 || enemy.x >= canvas.width - enemy.size) enemy.dx *= -1;
+                if (enemy.y <= 0 || enemy.y >= canvas.height - enemy.size) enemy.dy *= -1;
+            });
+        }
+        
+        function checkCollisions() {
+            // Colisión con banderas
+            for (let i = flags.length - 1; i >= 0; i--) {
+                const flag = flags[i];
+                if (player.x < flag.x + flag.size &&
+                    player.x + player.size > flag.x &&
+                    player.y < flag.y + flag.size &&
+                    player.y + player.size > flag.y) {
+                    flags.splice(i, 1); // Eliminar bandera
+                }
+            }
+
+            // Colisión con enemigos
+            for (const enemy of enemies) {
+                if (player.x < enemy.x + enemy.size &&
+                    player.x + player.size > enemy.x &&
+                    player.y < enemy.y + enemy.size &&
+                    player.y + player.size > enemy.y) {
+                    return true; // Hay colisión
+                }
+            }
+            return false;
+        }
+
+        function drawRect(entity) {
+            ctx.fillStyle = entity.color;
+            ctx.fillRect(entity.x, entity.y, entity.size, entity.size);
+        }
+
+        function draw() {
+            // Limpiar canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Dibujar banderas
+            flags.forEach(drawRect);
+            
+            // Dibujar enemigos
+            enemies.forEach(drawRect);
+
+            // Dibujar jugador
+            drawRect(player);
+        }
+        
+        function updateInfoText(){
+             infoText.textContent = `Banderas restantes: ${flags.length}`;
+        }
+
+        function gameLoop() {
+            updatePlayerPosition();
+            updateEnemies();
+            
+            if (checkCollisions()) {
+                infoText.textContent = "¡PERDISTE! Recarga la página para reintentar.";
+                return; // Detener el juego
+            }
+
+            if (flags.length === 0) {
+                infoText.textContent = "¡GANASTE! Recarga la página para jugar de nuevo.";
+                return; // Detener el juego
+            }
+            
+            updateInfoText();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Iniciar el juego
+        setupGame();
+        gameLoop();
+    </script>
+
+</body>
+</html>
