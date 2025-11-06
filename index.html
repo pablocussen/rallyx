@@ -2,194 +2,164 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Mini Rally-X</title>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #111;
-            color: #fff;
-            font-family: 'Courier New', Courier, monospace;
-        }
-        canvas {
-            border: 2px solid #fff;
-            background-color: #000;
-        }
-        h1 {
-            margin-bottom: 10px;
-        }
-        p {
-            margin-top: 5px;
-            font-size: 1.2em;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Rally X - Professional Edition. Juego arcade moderno con gráficos profesionales, efectos de sonido, power-ups y múltiples niveles.">
+    <meta name="keywords" content="rally x, juego, arcade, html5, canvas, profesional">
+    <meta name="author" content="Rally X Professional Team">
+    <meta name="theme-color" content="#00d4ff">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Rally X - Professional Edition">
+    <meta property="og:description" content="Experiencia arcade profesional en tu navegador">
+    <meta property="og:image" content="/assets/images/og-image.png">
+
+    <!-- Apple Mobile Web App -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Rally X">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🏁</text></svg>">
+
+    <!-- Manifest for PWA -->
+    <link rel="manifest" href="manifest.json">
+
+    <title>Rally X - Professional Edition</title>
+
+    <!-- Estilos -->
+    <link rel="stylesheet" href="css/main.css">
+
+    <!-- Preload de recursos críticos -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 <body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">CARGANDO RALLY X...</div>
+    </div>
 
-    <h1>Mini Rally-X</h1>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <p id="infoText">Banderas restantes: 10 | USA LAS FLECHAS PARA MOVERTE</p>
+    <!-- Contenedor Principal del Juego -->
+    <div class="game-container">
+        <!-- Header -->
+        <header class="game-header">
+            <h1 class="game-title">RALLY X</h1>
+            <p class="game-subtitle">PROFESSIONAL EDITION</p>
+        </header>
 
+        <!-- Canvas del Juego -->
+        <canvas id="gameCanvas" width="1200" height="800">
+            Tu navegador no soporta HTML5 Canvas. Por favor, actualiza tu navegador.
+        </canvas>
+
+        <!-- Controles Táctiles (Móvil) -->
+        <div class="touch-controls" id="touchControls">
+            <div class="joystick-area" id="joystickArea">
+                <div class="joystick-knob" id="joystickKnob"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="game-footer">
+            <p>
+                Controles: <strong>WASD</strong> o <strong>Flechas</strong> para moverse |
+                <strong>ESC</strong> para pausar |
+                <strong>R</strong> para reiniciar
+            </p>
+            <p style="margin-top: 10px; font-size: 0.7rem;">
+                Desarrollado con ❤️ usando HTML5 Canvas & JavaScript ES6+ |
+                <a href="#" onclick="game?.toggleAudio(); return false;">🔊 Audio</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script type="module" src="js/main.js"></script>
+
+    <!-- Service Worker Registration (PWA) -->
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const infoText = document.getElementById('infoText');
-
-        const TILE_SIZE = 40;
-
-        // Jugador
-        const player = {
-            x: TILE_SIZE * 2,
-            y: TILE_SIZE * 2,
-            size: TILE_SIZE * 0.8,
-            speed: 4,
-            color: '#0099ff'
-        };
-
-        // Banderas
-        let flags = [];
-        const FLAG_COUNT = 10;
-        
-        // Enemigos
-        let enemies = [];
-        const ENEMY_COUNT = 4;
-
-        function setupGame() {
-            // Resetear y colocar banderas aleatoriamente
-            flags = [];
-            for (let i = 0; i < FLAG_COUNT; i++) {
-                flags.push({
-                    x: Math.floor(Math.random() * (canvas.width / TILE_SIZE)) * TILE_SIZE + TILE_SIZE * 0.1,
-                    y: Math.floor(Math.random() * (canvas.height / TILE_SIZE)) * TILE_SIZE + TILE_SIZE * 0.1,
-                    size: TILE_SIZE * 0.8,
-                    color: '#ffd700'
-                });
-            }
-
-            // Resetear y colocar enemigos
-            enemies = [];
-            for (let i = 0; i < ENEMY_COUNT; i++) {
-                enemies.push({
-                    x: canvas.width - TILE_SIZE * (3 + i * 2),
-                    y: canvas.height - TILE_SIZE * (3 + i * 2),
-                    size: TILE_SIZE * 0.8,
-                    speed: 1 + Math.random(),
-                    color: '#ff4136',
-                    dx: Math.random() > 0.5 ? 1 : -1, // Dirección inicial
-                    dy: Math.random() > 0.5 ? 1 : -1
-                });
-            }
-             updateInfoText();
-        }
-
-
-        // Controles
-        const keys = {
-            ArrowUp: false,
-            ArrowDown: false,
-            ArrowLeft: false,
-            ArrowRight: false
-        };
-
-        window.addEventListener('keydown', (e) => {
-            if (e.key in keys) keys[e.key] = true;
-        });
-        window.addEventListener('keyup', (e) => {
-            if (e.key in keys) keys[e.key] = false;
-        });
-
-        function updatePlayerPosition() {
-            if (keys.ArrowUp && player.y > 0) player.y -= player.speed;
-            if (keys.ArrowDown && player.y < canvas.height - player.size) player.y += player.speed;
-            if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
-            if (keys.ArrowRight && player.x < canvas.width - player.size) player.x += player.speed;
-        }
-
-        function updateEnemies() {
-            enemies.forEach(enemy => {
-                enemy.x += enemy.speed * enemy.dx;
-                enemy.y += enemy.speed * enemy.dy;
-
-                // Rebotar en los bordes
-                if (enemy.x <= 0 || enemy.x >= canvas.width - enemy.size) enemy.dx *= -1;
-                if (enemy.y <= 0 || enemy.y >= canvas.height - enemy.size) enemy.dy *= -1;
+        // Registrar Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker registrado:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('❌ Error al registrar Service Worker:', error);
+                    });
             });
         }
-        
-        function checkCollisions() {
-            // Colisión con banderas
-            for (let i = flags.length - 1; i >= 0; i--) {
-                const flag = flags[i];
-                if (player.x < flag.x + flag.size &&
-                    player.x + player.size > flag.x &&
-                    player.y < flag.y + flag.size &&
-                    player.y + player.size > flag.y) {
-                    flags.splice(i, 1); // Eliminar bandera
+
+        // Ocultar loading screen cuando todo esté listo
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loadingScreen');
+                if (loadingScreen) {
+                    loadingScreen.style.opacity = '0';
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                    }, 500);
                 }
-            }
+            }, 1000);
+        });
 
-            // Colisión con enemigos
-            for (const enemy of enemies) {
-                if (player.x < enemy.x + enemy.size &&
-                    player.x + player.size > enemy.x &&
-                    player.y < enemy.y + enemy.size &&
-                    player.y + player.size > enemy.y) {
-                    return true; // Hay colisión
-                }
-            }
-            return false;
-        }
+        // Prevenir zoom en dispositivos móviles
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
 
-        function drawRect(entity) {
-            ctx.fillStyle = entity.color;
-            ctx.fillRect(entity.x, entity.y, entity.size, entity.size);
-        }
+        // Detectar instalación de PWA
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            console.log('💡 Aplicación lista para instalar');
+        });
 
-        function draw() {
-            // Limpiar canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Dibujar banderas
-            flags.forEach(drawRect);
-            
-            // Dibujar enemigos
-            enemies.forEach(drawRect);
+        // Analytics y telemetría (opcional)
+        window.addEventListener('error', (e) => {
+            console.error('Error capturado:', e.error);
+        });
 
-            // Dibujar jugador
-            drawRect(player);
-        }
-        
-        function updateInfoText(){
-             infoText.textContent = `Banderas restantes: ${flags.length}`;
-        }
-
-        function gameLoop() {
-            updatePlayerPosition();
-            updateEnemies();
-            
-            if (checkCollisions()) {
-                infoText.textContent = "¡PERDISTE! Recarga la página para reintentar.";
-                return; // Detener el juego
-            }
-
-            if (flags.length === 0) {
-                infoText.textContent = "¡GANASTE! Recarga la página para jugar de nuevo.";
-                return; // Detener el juego
-            }
-            
-            updateInfoText();
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
-
-        // Iniciar el juego
-        setupGame();
-        gameLoop();
+        // Información de debug en consola
+        console.log('%c🎮 RALLY X - Professional Edition',
+            'color: #00d4ff; font-size: 24px; font-weight: bold;');
+        console.log('%cDesarrollado con tecnologías modernas de web',
+            'color: #888; font-size: 12px;');
+        console.log('%c- HTML5 Canvas para renderizado',
+            'color: #ffd700; font-size: 11px;');
+        console.log('%c- JavaScript ES6+ Modules',
+            'color: #ffd700; font-size: 11px;');
+        console.log('%c- Web Audio API para sonidos',
+            'color: #ffd700; font-size: 11px;');
+        console.log('%c- Progressive Web App (PWA)',
+            'color: #ffd700; font-size: 11px;');
+        console.log('%c- Sistema de partículas avanzado',
+            'color: #ffd700; font-size: 11px;');
+        console.log('%c\nAccede a "game" en la consola para controlar el juego programáticamente',
+            'color: #00ff88; font-size: 11px;');
     </script>
 
+    <!-- Esquema JSON-LD para SEO -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "Rally X - Professional Edition",
+        "description": "Juego arcade profesional de carreras y recolección",
+        "genre": "Arcade",
+        "gamePlatform": "Web Browser",
+        "applicationCategory": "Game",
+        "operatingSystem": "Any (HTML5)",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        }
+    }
+    </script>
 </body>
 </html>

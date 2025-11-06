@@ -1,0 +1,395 @@
+/**
+ * RALLY X - Professional Edition
+ * Estilos principales
+ */
+
+/* Importar fuente moderna */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
+/* Reset y base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #00d4ff;
+    --secondary-color: #ff4757;
+    --success-color: #00ff88;
+    --warning-color: #ffd700;
+    --danger-color: #ff4757;
+    --bg-dark: #0a0e27;
+    --bg-darker: #050810;
+    --text-light: #ffffff;
+    --text-muted: #888888;
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+/* Body y contenedor principal */
+body {
+    font-family: 'Orbitron', 'Courier New', Courier, monospace;
+    background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+    color: var(--text-light);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* Fondo animado con estrellas */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(2px 2px at 20px 30px, white, transparent),
+        radial-gradient(2px 2px at 60px 70px, white, transparent),
+        radial-gradient(1px 1px at 50px 50px, white, transparent),
+        radial-gradient(1px 1px at 130px 80px, white, transparent),
+        radial-gradient(2px 2px at 90px 10px, white, transparent);
+    background-repeat: repeat;
+    background-size: 200px 200px;
+    opacity: 0.3;
+    animation: stars 200s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes stars {
+    from { transform: translateY(0); }
+    to { transform: translateY(-200px); }
+}
+
+/* Contenedor del juego */
+.game-container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+}
+
+/* Header */
+.game-header {
+    text-align: center;
+    animation: fadeInDown 0.8s ease-out;
+}
+
+.game-title {
+    font-size: 3rem;
+    font-weight: 900;
+    letter-spacing: 8px;
+    background: linear-gradient(90deg, var(--primary-color), var(--text-light), var(--primary-color));
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+    animation: shimmer 3s linear infinite, pulse 2s ease-in-out infinite;
+    margin-bottom: 10px;
+}
+
+@keyframes shimmer {
+    to { background-position: 200% center; }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.game-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    letter-spacing: 4px;
+    font-weight: 400;
+}
+
+/* Canvas */
+#gameCanvas {
+    border: 3px solid var(--glass-border);
+    border-radius: 10px;
+    box-shadow:
+        0 0 20px rgba(0, 212, 255, 0.3),
+        0 0 40px rgba(0, 212, 255, 0.2),
+        inset 0 0 60px rgba(0, 0, 0, 0.5);
+    background: var(--bg-darker);
+    animation: fadeIn 1s ease-out;
+    cursor: crosshair;
+    transition: all 0.3s ease;
+    max-width: 100%;
+    height: auto;
+}
+
+#gameCanvas:hover {
+    box-shadow:
+        0 0 30px rgba(0, 212, 255, 0.5),
+        0 0 60px rgba(0, 212, 255, 0.3),
+        inset 0 0 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Loading screen */
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-darker);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: fadeOut 0.5s ease-out 1s forwards;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid var(--glass-border);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+}
+
+/* Animaciones de entrada */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+/* Controles táctiles (móvil) */
+.touch-controls {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+}
+
+@media (max-width: 768px), (hover: none) {
+    .touch-controls {
+        display: flex;
+        gap: 20px;
+    }
+
+    .game-title {
+        font-size: 2rem;
+        letter-spacing: 4px;
+    }
+
+    body::before {
+        animation-duration: 100s;
+    }
+}
+
+.joystick-area {
+    width: 120px;
+    height: 120px;
+    background: var(--glass-bg);
+    border: 2px solid var(--glass-border);
+    border-radius: 50%;
+    backdrop-filter: blur(10px);
+    position: relative;
+    touch-action: none;
+}
+
+.joystick-knob {
+    width: 50px;
+    height: 50px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+    pointer-events: none;
+}
+
+/* Footer */
+.game-footer {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 20px;
+    animation: fadeIn 1.5s ease-out;
+}
+
+.game-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.game-footer a:hover {
+    color: var(--text-light);
+    text-shadow: 0 0 10px var(--primary-color);
+}
+
+/* Efectos de glassmorphism */
+.glass-panel {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-darker);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-light);
+}
+
+/* Cursor personalizado para canvas */
+canvas {
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+}
+
+/* Responsive */
+@media (max-width: 1280px) {
+    #gameCanvas {
+        max-width: 95vw;
+    }
+}
+
+@media (max-width: 768px) {
+    .game-container {
+        padding: 10px;
+    }
+
+    .game-header {
+        margin-bottom: 10px;
+    }
+
+    .game-title {
+        font-size: 1.8rem;
+        letter-spacing: 3px;
+    }
+
+    .game-subtitle {
+        font-size: 0.7rem;
+        letter-spacing: 2px;
+    }
+
+    #gameCanvas {
+        border-width: 2px;
+        border-radius: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .game-title {
+        font-size: 1.5rem;
+    }
+
+    .game-subtitle {
+        font-size: 0.6rem;
+    }
+}
+
+/* Orientación landscape en móvil */
+@media (max-height: 500px) and (orientation: landscape) {
+    .game-header {
+        display: none;
+    }
+
+    .game-container {
+        padding: 5px;
+    }
+
+    #gameCanvas {
+        max-height: 90vh;
+    }
+}
+
+/* Modo oscuro forzado */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #000000 0%, var(--bg-dark) 100%);
+    }
+}
+
+/* Accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    body::before {
+        animation: none;
+    }
+}
+
+/* Print styles */
+@media print {
+    body::before,
+    .touch-controls,
+    .game-footer {
+        display: none;
+    }
+}
