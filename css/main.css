@@ -32,13 +32,15 @@ body {
     font-family: 'Orbitron', 'Courier New', Courier, monospace;
     background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
     color: var(--text-light);
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     min-height: 100vh;
     position: relative;
+    padding: 10px 0;
 }
 
 /* Fondo animado con estrellas */
@@ -75,8 +77,10 @@ body::before {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
-    padding: 20px;
+    gap: 10px;
+    padding: 10px;
+    width: 100%;
+    max-width: 1300px;
 }
 
 /* Header */
@@ -86,9 +90,9 @@ body::before {
 }
 
 .game-title {
-    font-size: 3rem;
+    font-size: 2rem;
     font-weight: 900;
-    letter-spacing: 8px;
+    letter-spacing: 4px;
     background: linear-gradient(90deg, var(--primary-color), var(--text-light), var(--primary-color));
     background-size: 200% auto;
     background-clip: text;
@@ -96,7 +100,7 @@ body::before {
     -webkit-text-fill-color: transparent;
     text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
     animation: shimmer 3s linear infinite, pulse 2s ease-in-out infinite;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
 }
 
 @keyframes shimmer {
@@ -109,9 +113,9 @@ body::before {
 }
 
 .game-subtitle {
-    font-size: 0.9rem;
+    font-size: 0.7rem;
     color: var(--text-muted);
-    letter-spacing: 4px;
+    letter-spacing: 2px;
     font-weight: 400;
 }
 
@@ -317,26 +321,59 @@ canvas {
 
 @media (max-width: 768px) {
     .game-container {
-        padding: 10px;
+        padding: 5px;
+        gap: 5px;
     }
 
     .game-header {
-        margin-bottom: 10px;
+        margin-bottom: 5px;
     }
 
     .game-title {
-        font-size: 1.8rem;
-        letter-spacing: 3px;
+        font-size: 1.5rem;
+        letter-spacing: 2px;
+        margin-bottom: 2px;
     }
 
     .game-subtitle {
-        font-size: 0.7rem;
-        letter-spacing: 2px;
+        font-size: 0.6rem;
+        letter-spacing: 1px;
     }
 
     #gameCanvas {
         border-width: 2px;
         border-radius: 5px;
+        max-width: 98vw !important;
+        max-height: 60vh;
+        width: auto !important;
+        height: auto !important;
+    }
+
+    .game-footer {
+        font-size: 0.65rem;
+        margin-top: 5px;
+        padding: 5px;
+    }
+
+    .game-footer p {
+        margin: 2px 0;
+    }
+
+    .joystick-area {
+        width: 140px;
+        height: 140px;
+        border: 3px solid var(--primary-color);
+        background: rgba(0, 212, 255, 0.1);
+    }
+
+    .joystick-knob {
+        width: 60px;
+        height: 60px;
+        box-shadow: 0 0 30px rgba(0, 212, 255, 0.8);
+    }
+
+    .touch-controls {
+        bottom: 10px;
     }
 }
 
