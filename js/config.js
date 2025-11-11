@@ -6,8 +6,8 @@
 export const CONFIG = {
     // Canvas y Visuales
     CANVAS: {
-        WIDTH: 1200,
-        HEIGHT: 800,
+        WIDTH: 960,
+        HEIGHT: 640,
         BACKGROUND: '#0a0e27',
         GRID_SIZE: 40,
         PARTICLE_COUNT: 100
