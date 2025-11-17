@@ -13,6 +13,7 @@ import { AchievementSystem } from './systems/AchievementSystem.js';
 import { StateManager } from './systems/StateManager.js';
 import { MenuState } from './states/MenuState.js';
 import { GameState } from './states/GameState.js';
+import GameStateEnhanced from './states/GameStateEnhanced.js'; // 🚀 Revolutionary Game State
 import { PauseState } from './states/PauseState.js';
 import { GameOverState } from './states/GameOverState.js';
 
@@ -35,7 +36,7 @@ class Game {
 
         // Registrar estados
         this.stateManager.register('menu', new MenuState(this));
-        this.stateManager.register('game', new GameState(this));
+        this.stateManager.register('game', new GameStateEnhanced(this)); // 🚀 Using Revolutionary GameState with 11 systems
         this.stateManager.register('pause', new PauseState(this));
         this.stateManager.register('gameover', new GameOverState(this));
 
@@ -56,7 +57,8 @@ class Game {
     }
 
     init() {
-        console.log('🎮 Iniciando RALLY X - Professional Edition');
+        console.log('🎮 Iniciando RALLY X - REVOLUTIONARY EDITION 2.0');
+        console.log('🚀 11 Revolutionary Systems Active');
         console.log('Canvas:', this.canvas.width, 'x', this.canvas.height);
 
         // Empezar en el menú
