@@ -3,7 +3,9 @@
  * Permite funcionamiento offline y carga rápida
  */
 
-const CACHE_NAME = 'rallyx-v1.0.0';
+const CACHE_NAME = 'rallyx-v1.1.0';
+const RUNTIME_CACHE = 'rallyx-runtime-v1.1.0';
+
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -58,7 +60,9 @@ self.addEventListener('activate', (event) => {
             .then((cacheNames) => {
                 return Promise.all(
                     cacheNames
-                        .filter((cacheName) => cacheName !== CACHE_NAME)
+                        .filter((cacheName) =>
+                            cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE
+                        )
                         .map((cacheName) => {
                             console.log('🗑️ Service Worker: Eliminando cache antigua:', cacheName);
                             return caches.delete(cacheName);
@@ -72,54 +76,68 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Interceptar peticiones (Fetch)
+// Interceptar peticiones (Fetch) - Estrategia Cache-First optimizada
 self.addEventListener('fetch', (event) => {
     // Ignorar peticiones que no sean GET
     if (event.request.method !== 'GET') {
         return;
     }
 
-    // Ignorar peticiones a dominios externos (fuentes, etc.)
+    // Ignorar peticiones a dominios externos
     if (!event.request.url.startsWith(self.location.origin)) {
         return;
     }
 
-    event.respondWith(
-        caches.match(event.request)
-            .then((cachedResponse) => {
-                // Si está en cache, devolver la versión cacheada
+    // Cache-first strategy para assets estáticos
+    if (event.request.url.match(/\.(js|css|html)$/)) {
+        event.respondWith(
+            caches.match(event.request).then((cachedResponse) => {
                 if (cachedResponse) {
+                    // Retornar del cache y actualizar en background
+                    fetch(event.request).then((response) => {
+                        if (response && response.status === 200) {
+                            caches.open(CACHE_NAME).then((cache) => {
+                                cache.put(event.request, response);
+                            });
+                        }
+                    }).catch(() => {});
                     return cachedResponse;
                 }
 
-                // Si no está en cache, hacer fetch y cachear
-                return fetch(event.request)
-                    .then((response) => {
-                        // Verificar que la respuesta es válida
-                        if (!response || response.status !== 200 || response.type === 'error') {
-                            return response;
-                        }
-
-                        // Clonar la respuesta porque es un stream que solo se puede usar una vez
-                        const responseToCache = response.clone();
-
-                        caches.open(CACHE_NAME)
-                            .then((cache) => {
-                                cache.put(event.request, responseToCache);
-                            });
-
+                // No está en cache, fetch y cachear
+                return fetch(event.request).then((response) => {
+                    if (!response || response.status !== 200) {
                         return response;
-                    })
-                    .catch((error) => {
-                        console.error('❌ Error en fetch:', error);
-
-                        // Si falla el fetch, intentar devolver index.html del cache (para navegación offline)
-                        if (event.request.mode === 'navigate') {
-                            return caches.match('/index.html');
-                        }
+                    }
+                    const responseToCache = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseToCache);
                     });
+                    return response;
+                }).catch((error) => {
+                    if (event.request.mode === 'navigate') {
+                        return caches.match('/index.html');
+                    }
+                    throw error;
+                });
             })
-    );
+        );
+    } else {
+        // Network-first para otros recursos
+        event.respondWith(
+            fetch(event.request).then((response) => {
+                if (response && response.status === 200) {
+                    const responseToCache = response.clone();
+                    caches.open(RUNTIME_CACHE).then((cache) => {
+                        cache.put(event.request, responseToCache);
+                    });
+                }
+                return response;
+            }).catch(() => {
+                return caches.match(event.request);
+            })
+        );
+    }
 });
 
 // Mensajes desde el cliente

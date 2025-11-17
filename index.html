@@ -27,10 +27,16 @@
 
     <title>Rally X - Professional Edition</title>
 
+    <!-- Preload recursos críticos -->
+    <link rel="preload" href="css/main.css" as="style">
+    <link rel="preload" href="js/main.js" as="script">
+    <link rel="preload" href="js/config.js" as="script">
+
     <!-- Estilos -->
     <link rel="stylesheet" href="css/main.css">
 
-    <!-- Preload de recursos críticos -->
+    <!-- DNS Prefetch -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
@@ -75,8 +81,13 @@
         </footer>
     </div>
 
-    <!-- JavaScript Modules -->
+    <!-- JavaScript Modules (defer automático en module) -->
     <script type="module" src="js/main.js"></script>
+
+    <!-- Prefetch próximos recursos para navegación más rápida -->
+    <link rel="prefetch" href="js/states/GameState.js">
+    <link rel="prefetch" href="js/entities/Player.js">
+    <link rel="prefetch" href="js/entities/Enemy.js">
 
     <!-- Service Worker Registration (PWA) -->
     <script>
