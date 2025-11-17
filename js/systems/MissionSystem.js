@@ -9,6 +9,7 @@ export class MissionSystem {
     constructor() {
         this.dailyMissions = [];
         this.completedMissions = [];
+        this.missionsCompleted = 0; // Total de misiones completadas (contador global)
         this.missionTemplates = [
             // Misiones de Score
             { id: 'score_5k', type: 'score', target: 5000, reward: 500, title: 'Score Master', desc: 'Alcanza 5,000 puntos' },
@@ -125,6 +126,7 @@ export class MissionSystem {
             if (mission.progress >= mission.target && !mission.completed) {
                 mission.completed = true;
                 this.completedMissions.push(mission.id);
+                this.missionsCompleted++; // Incrementar contador global
                 completedNew = true;
             }
         });
@@ -165,6 +167,13 @@ export class MissionSystem {
 
     getAllCompleted() {
         return this.getCompletedCount() === this.dailyMissions.length;
+    }
+
+    getDailyProgress() {
+        return {
+            completed: this.getCompletedCount(),
+            total: this.dailyMissions.length
+        };
     }
 
     reset() {
