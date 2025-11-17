@@ -5,11 +5,11 @@
  * API simple para usar desde GameState
  */
 
-import StarfieldBackground from './StarfieldBackground.js';
-import PowerUpEffects from './PowerUpEffects.js';
-import TransitionEffects from './TransitionEffects.js';
-import UIAnimations from './UIAnimations.js';
-import ParticleSystemEnhanced from '../systems/ParticleSystemEnhanced.js';
+import { StarfieldBackground } from './StarfieldBackground.js';
+import { PowerUpEffects } from './PowerUpEffects.js';
+import { TransitionEffects } from './TransitionEffects.js';
+import { UIAnimations } from './UIAnimations.js';
+import { ParticleSystemEnhanced } from '../systems/ParticleSystemEnhanced.js';
 
 export class VisualEffectsManager {
     constructor(canvas, ctx) {
