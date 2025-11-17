@@ -442,12 +442,18 @@ export class MusicEngine {
 
         const { health, combo, tension, feverMode, intensity } = gameState;
 
+        // Validar y sanitizar valores (prevenir NaN)
+        const safeHealth = Number.isFinite(health) ? Math.max(0, Math.min(100, health)) : 100;
+        const safeCombo = Number.isFinite(combo) ? Math.max(0, combo) : 0;
+        const safeTension = Number.isFinite(tension) ? Math.max(0, Math.min(1, tension)) : 0;
+        const safeIntensity = Number.isFinite(intensity) ? Math.max(0, Math.min(1, intensity)) : 0.5;
+
         // Calcular nueva intensidad (0-1)
         this.musicState.intensity = Math.max(
-            intensity || 0.5,
-            combo / 50, // Combo aumenta intensidad
-            (100 - health) / 100, // Health bajo aumenta intensidad
-            tension / 100
+            safeIntensity,
+            safeCombo / 50, // Combo aumenta intensidad
+            (100 - safeHealth) / 100, // Health bajo aumenta intensidad
+            safeTension
         );
 
         // Ajustar BPM según intensidad
@@ -459,19 +465,19 @@ export class MusicEngine {
         const now = this.audioContext.currentTime;
 
         // Melody: más fuerte con combos altos
-        const melodyVolume = 0.2 + (combo / 100) * 0.4;
+        const melodyVolume = Math.max(0, Math.min(1, 0.2 + (safeCombo / 100) * 0.4));
         this.nodes.melodyGain.gain.linearRampToValueAtTime(melodyVolume, now + 0.5);
 
         // Drums: más intensos con tensión alta
-        const drumsVolume = 0.3 + (tension / 100) * 0.4;
+        const drumsVolume = Math.max(0, Math.min(1, 0.3 + safeTension * 0.4));
         this.nodes.drumsGain.gain.linearRampToValueAtTime(drumsVolume, now + 0.5);
 
         // Drone de tensión: activo cuando health bajo
-        const droneVolume = health < 30 ? (30 - health) / 30 * 0.3 : 0;
+        const droneVolume = safeHealth < 30 ? Math.max(0, Math.min(1, (30 - safeHealth) / 30 * 0.3)) : 0;
         this.nodes.droneGain.gain.linearRampToValueAtTime(droneVolume, now + 1);
 
         // Arpeggios: activos en fever mode o combo alto
-        if (feverMode || combo >= 15) {
+        if (feverMode || safeCombo >= 15) {
             if (!this.sequencers.arpeggio.interval) {
                 this.startArpeggios();
                 this.nodes.arpeggioGain.gain.linearRampToValueAtTime(0.3, now + 0.5);
