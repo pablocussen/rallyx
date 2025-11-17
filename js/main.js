@@ -37,8 +37,20 @@ class Game {
 
         // Registrar estados
         this.stateManager.register('menu', new MenuState(this));
-        this.stateManager.register('game', new GameStateSimple(this)); // 🧪 USING SIMPLE STATE FOR TESTING
-        //this.stateManager.register('game', new GameStateEnhanced(this)); // 🚀 Using Revolutionary GameState with 11 systems
+
+        // Try to load GameStateEnhanced with detailed error handling
+        try {
+            console.log('🚀 Attempting to load GameStateEnhanced...');
+            this.stateManager.register('game', new GameStateEnhanced(this));
+            console.log('✅ GameStateEnhanced loaded successfully!');
+        } catch (error) {
+            console.error('❌ GameStateEnhanced FAILED to load:', error);
+            console.error('Stack:', error.stack);
+            // Fallback to simple state
+            console.warn('🔄 Falling back to GameStateSimple...');
+            this.stateManager.register('game', new GameStateSimple(this));
+        }
+
         this.stateManager.register('pause', new PauseState(this));
         this.stateManager.register('gameover', new GameOverState(this));
 
