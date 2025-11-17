@@ -14,6 +14,7 @@ import { StateManager } from './systems/StateManager.js';
 import { MenuState } from './states/MenuState.js';
 import { GameState } from './states/GameState.js';
 import GameStateEnhanced from './states/GameStateEnhanced.js'; // 🚀 Revolutionary Game State
+import GameStateSimple from './states/GameStateSimple.js'; // 🧪 Simple test state
 import { PauseState } from './states/PauseState.js';
 import { GameOverState } from './states/GameOverState.js';
 
@@ -36,7 +37,8 @@ class Game {
 
         // Registrar estados
         this.stateManager.register('menu', new MenuState(this));
-        this.stateManager.register('game', new GameStateEnhanced(this)); // 🚀 Using Revolutionary GameState with 11 systems
+        this.stateManager.register('game', new GameStateSimple(this)); // 🧪 USING SIMPLE STATE FOR TESTING
+        //this.stateManager.register('game', new GameStateEnhanced(this)); // 🚀 Using Revolutionary GameState with 11 systems
         this.stateManager.register('pause', new PauseState(this));
         this.stateManager.register('gameover', new GameOverState(this));
 
