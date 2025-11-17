@@ -22,7 +22,7 @@ import SkinManager from '../systems/SkinManager.js';
 import ScreenEffects from '../systems/ScreenEffects.js';
 import TutorialSystem from '../systems/TutorialSystem.js';
 import LeaderboardSystem from '../systems/LeaderboardSystem.js';
-import VisualEffectsManager from '../visual/VisualEffectsManager.js';
+import { VisualEffectsManager } from '../visual/VisualEffectsManager.js';
 
 export class GameStateEnhanced {
     constructor(game) {
