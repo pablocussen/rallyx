@@ -22,6 +22,7 @@ import SkinManager from '../systems/SkinManager.js';
 import ScreenEffects from '../systems/ScreenEffects.js';
 import TutorialSystem from '../systems/TutorialSystem.js';
 import LeaderboardSystem from '../systems/LeaderboardSystem.js';
+import VisualEffectsManager from '../visual/VisualEffectsManager.js';
 
 export class GameStateEnhanced {
     constructor(game) {
@@ -49,17 +50,19 @@ export class GameStateEnhanced {
         this.screenEffects = new ScreenEffects(game.canvas, game.ctx);
         this.tutorialSystem = new TutorialSystem();
         this.leaderboardSystem = new LeaderboardSystem();
+        this.visualFX = new VisualEffectsManager(game.canvas, game.ctx);
 
         // Estado del juego
         this.gameMode = 'classic';
         this.frozen = false; // Para freeze frames
         this.nearMissDistance = 50;
         this.nearMissCount = 0;
+        this.previousFeverMode = false; // Para detectar cambios en FEVER MODE
 
         // UI notifications
         this.notifications = [];
 
-        console.log('🚀 GameStateEnhanced inicializado con TODOS los sistemas revolucionarios');
+        console.log('🚀 GameStateEnhanced inicializado con TODOS los sistemas revolucionarios + Visual FX IMPRESIONANTE');
     }
 
     enter(data = {}) {
@@ -173,6 +176,9 @@ export class GameStateEnhanced {
         // Reset combo
         this.comboSystem.resetStats();
 
+        // EFECTOS VISUALES de inicio de nivel
+        this.visualFX.levelStart(this.level);
+
         console.log(`🎮 Nivel ${this.level} - Modo: ${this.gameMode}`);
         console.log(`Banderas: ${this.flags.length}, Enemigos: ${this.enemies.length}`);
     }
@@ -217,6 +223,12 @@ export class GameStateEnhanced {
 
         // Actualizar screen effects
         this.screenEffects.update(deltaTime);
+
+        // Actualizar Visual Effects Manager
+        this.visualFX.update(deltaTime, {
+            playerSpeed: this.player ? this.player.speed : 0,
+            feverMode: this.comboSystem.feverMode
+        });
 
         // Verificar freeze frame
         if (this.screenEffects.isFrozen()) {
@@ -318,6 +330,20 @@ export class GameStateEnhanced {
         // Verificar desbloqueos de skins
         this.checkSkinUnlocks();
 
+        // Detectar cambios en FEVER MODE
+        const currentFeverMode = this.comboSystem.feverMode;
+        if (currentFeverMode && !this.previousFeverMode) {
+            // FEVER MODE INICIADO - ¡EFECTOS ÉPICOS!
+            this.visualFX.feverModeStart(
+                this.player.x + this.player.width / 2,
+                this.player.y + this.player.height / 2
+            );
+        } else if (!currentFeverMode && this.previousFeverMode) {
+            // FEVER MODE TERMINADO
+            this.visualFX.feverModeEnd();
+        }
+        this.previousFeverMode = currentFeverMode;
+
         // Actualizar notificaciones
         this.updateNotifications(deltaTime);
     }
@@ -339,13 +365,16 @@ export class GameStateEnhanced {
 
                 this.flags.splice(i, 1);
 
-                // Efectos visuales
+                // Efectos visuales IMPRESIONANTES
+                const flagX = flag.x + flag.width / 2;
+                const flagY = flag.y + flag.height / 2;
+
+                // Visual FX Manager (nuevos efectos espectaculares)
+                this.visualFX.flagCollected(flagX, flagY, finalPoints);
+
+                // Mantener compatibilidad con efectos originales
                 const colors = this.skinManager.getCurrentColors();
-                this.game.particles.collect(
-                    flag.x + flag.width / 2,
-                    flag.y + flag.height / 2,
-                    colors.primary
-                );
+                this.game.particles.collect(flagX, flagY, colors.primary);
 
                 // Screen effects
                 this.screenEffects.flagCollected();
@@ -353,8 +382,11 @@ export class GameStateEnhanced {
                 // Audio
                 this.game.audio.playSound('flag_collect');
 
-                // Notificación de combo
+                // Notificación de combo y EFECTOS ESPECTACULARES
                 if (comboResult.milestone) {
+                    // Visual FX Manager (explosión espectacular de combo)
+                    this.visualFX.comboMilestone(flagX, flagY, comboResult.combo, comboResult.milestone);
+
                     this.addNotification(`${comboResult.milestone.name}`, 'combo');
                     this.screenEffects.comboMilestone(comboResult.combo);
                     this.musicEngine.triggerEvent('milestone');
@@ -390,12 +422,15 @@ export class GameStateEnhanced {
                     this.game.score.setMultiplier(multiplier, powerupData.duration);
                 }
 
-                // Efectos visuales
-                this.game.particles.powerupAura(
-                    powerup.x + powerup.width / 2,
-                    powerup.y + powerup.height / 2,
-                    powerup.color
-                );
+                // Efectos visuales IMPRESIONANTES
+                const powerupX = powerup.x + powerup.width / 2;
+                const powerupY = powerup.y + powerup.height / 2;
+
+                // Visual FX Manager (efectos espectaculares específicos por tipo)
+                this.visualFX.powerupCollected(powerupX, powerupY, powerupData.type);
+
+                // Mantener compatibilidad con efectos originales
+                this.game.particles.powerupAura(powerupX, powerupY, powerup.color);
 
                 this.screenEffects.powerupCollected();
 
@@ -438,11 +473,20 @@ export class GameStateEnhanced {
                     this.aiManager.gameState.consecutiveDeaths++;
                     this.aiManager.gameState.consecutivePerfects = 0;
 
-                    // Efectos
-                    this.game.particles.explosion(
-                        this.player.x + this.player.width / 2,
-                        this.player.y + this.player.height / 2
-                    );
+                    const playerX = this.player.x + this.player.width / 2;
+                    const playerY = this.player.y + this.player.height / 2;
+
+                    // EFECTOS ESPECTACULARES de muerte/hit
+                    if (this.player.health <= 0) {
+                        // Muerte total - explosión masiva
+                        this.visualFX.playerDeath(playerX, playerY);
+                    } else {
+                        // Solo hit - efectos menores
+                        this.visualFX.playerHit(playerX, playerY);
+                    }
+
+                    // Mantener efectos originales
+                    this.game.particles.explosion(playerX, playerY);
 
                     this.screenEffects.death();
                     this.game.audio.playSound('collision');
@@ -502,11 +546,12 @@ export class GameStateEnhanced {
         this.game.audio.playSound('level_complete');
         this.musicEngine.triggerEvent('levelComplete');
 
-        // Siguiente nivel
-        setTimeout(() => {
+        // EFECTOS VISUALES ESPECTACULARES de nivel completado
+        this.visualFX.levelComplete(() => {
+            // Callback cuando termina la transición
             this.level++;
             this.setupLevel();
-        }, 1500);
+        });
     }
 
     handleGameEnd(won) {
@@ -546,11 +591,15 @@ export class GameStateEnhanced {
         // Registrar en AI
         this.aiManager.recordLevelComplete(sessionStats, won);
 
-        // Screen effect
+        // Screen effect + VISUAL FX ESPECTACULARES
         if (won) {
             this.screenEffects.levelComplete();
         } else {
             this.screenEffects.gameOver();
+            // Game Over con transición cinematográfica
+            this.visualFX.gameOver(() => {
+                // La transición se completó
+            });
         }
 
         // Cambiar a pantalla de game over con todos los datos
@@ -685,21 +734,35 @@ export class GameStateEnhanced {
         // Pre-render effects (shake, zoom)
         this.screenEffects.preRender();
 
-        // Fondo
-        ctx.fillStyle = CONFIG.CANVAS.BACKGROUND;
+        // LAYER 1: Starfield Background
+        this.visualFX.getStarfield().draw(ctx);
+
+        // Fondo semi-transparente sobre starfield (opcional, para no perder visibilidad)
+        ctx.fillStyle = 'rgba(10, 14, 39, 0.3)';
         ctx.fillRect(0, 0, CONFIG.CANVAS.WIDTH, CONFIG.CANVAS.HEIGHT);
 
         // Grid
         this.drawGrid(ctx);
 
-        // Entidades
+        // LAYER 2: Particles (detrás de entidades)
+        this.visualFX.getParticles().draw(ctx);
+        this.visualFX.getParticles().drawSpecialParticles(ctx);
+
+        // LAYER 3: PowerUp Effects
+        this.visualFX.getPowerUpEffects().draw(ctx);
+
+        // LAYER 4: Entidades del juego
         this.powerups.forEach(p => p.draw(ctx));
         this.flags.forEach(f => f.draw(ctx));
         this.enemies.forEach(e => e.draw(ctx));
         this.player.draw(ctx);
 
-        // Partículas
+        // Partículas del sistema original (mantener compatibilidad)
         this.game.particles.draw(ctx);
+
+        // LAYER 5: UI Animations (floating texts, glowing elements)
+        this.visualFX.getUIAnimations().drawFloatingTexts(ctx);
+        this.visualFX.getUIAnimations().drawGlowingElements(ctx);
 
         // Post-render effects (vignette, glow, flash, etc)
         this.screenEffects.postRender();
@@ -712,11 +775,15 @@ export class GameStateEnhanced {
             this.drawTutorialOverlay(ctx);
         }
 
-        // Notificaciones
+        // LAYER 6: Notificaciones (tanto las nuevas como las viejas)
+        this.visualFX.getUIAnimations().drawNotifications(ctx, CONFIG.CANVAS.WIDTH);
         this.drawNotifications(ctx);
 
         // Achievement notifications
         this.drawAchievementNotifications(ctx);
+
+        // LAYER 7: Transitions (siempre encima de todo)
+        this.visualFX.getTransitions().draw();
     }
 
     drawGrid(ctx) {
@@ -1000,6 +1067,7 @@ export class GameStateEnhanced {
 
     exit() {
         this.musicEngine.stop();
+        this.visualFX.clear(); // Limpiar efectos visuales
         console.log('Saliendo del juego revolucionario');
     }
 }
