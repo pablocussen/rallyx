@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Visual Effects</title>
+</head>
+<body>
+    <h1>Testing Visual Effects</h1>
+    <canvas id="testCanvas" width="960" height="640"></canvas>
+
+    <script type="module">
+        console.log('🧪 Starting visual effects test...');
+
+        try {
+            console.log('Step 1: Importing VisualEffectsManager...');
+            const module = await import('./js/visual/VisualEffectsManager.js');
+            console.log('✅ Import successful:', module);
+
+            console.log('Step 2: Getting canvas...');
+            const canvas = document.getElementById('testCanvas');
+            const ctx = canvas.getContext('2d');
+            console.log('✅ Canvas ready');
+
+            console.log('Step 3: Creating VisualEffectsManager instance...');
+            const VisualEffectsManager = module.VisualEffectsManager || module.default;
+            const visualFX = new VisualEffectsManager(canvas, ctx);
+            console.log('✅ VisualEffectsManager created:', visualFX);
+
+            console.log('Step 4: Testing update...');
+            visualFX.update(16, { playerSpeed: 0, feverMode: false });
+            console.log('✅ Update successful');
+
+            console.log('Step 5: Testing draw...');
+            visualFX.draw();
+            console.log('✅ Draw successful');
+
+            console.log('🎉 ALL TESTS PASSED!');
+            document.body.innerHTML += '<h2 style="color: green;">✅ Visual Effects Working!</h2>';
+
+        } catch (error) {
+            console.error('❌ TEST FAILED:', error);
+            console.error('Error stack:', error.stack);
+            document.body.innerHTML += `<h2 style="color: red;">❌ Error: ${error.message}</h2>`;
+            document.body.innerHTML += `<pre>${error.stack}</pre>`;
+        }
+    </script>
+</body>
+</html>
