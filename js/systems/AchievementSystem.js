@@ -127,6 +127,38 @@ export class AchievementSystem {
         return this.achievements;
     }
 
+    /**
+     * Obtiene solo los logros desbloqueados
+     * @returns {Array} Array de logros desbloqueados
+     */
+    getUnlockedAchievements() {
+        return this.achievements.filter(a => a.unlocked);
+    }
+
+    /**
+     * Obtiene solo los logros bloqueados
+     * @returns {Array} Array de logros bloqueados
+     */
+    getLockedAchievements() {
+        return this.achievements.filter(a => !a.unlocked);
+    }
+
+    /**
+     * Obtiene detalles completos del progreso de logros
+     * @returns {Object} {unlocked, total, percentage, unlockedList, lockedList}
+     */
+    getProgressDetails() {
+        const unlocked = this.achievements.filter(a => a.unlocked);
+        const total = this.achievements.length;
+        return {
+            unlocked: unlocked.length,
+            total,
+            percentage: Math.round((unlocked.length / total) * 100),
+            unlockedList: unlocked,
+            lockedList: this.achievements.filter(a => !a.unlocked)
+        };
+    }
+
     reset() {
         this.achievements.forEach(a => {
             a.unlocked = false;

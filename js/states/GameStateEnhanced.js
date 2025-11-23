@@ -718,7 +718,7 @@ export class GameStateEnhanced {
                 maxCombo: this.comboSystem?.maxCombo || 0,
                 totalXp: this.progressionSystem?.totalXp || 0,
                 missionsCompleted: this.missionSystem?.missionsCompleted || 0,
-                achievements: this.game.achievements?.getAllAchievements()?.filter(a => a.unlocked).map(a => a.id) || [],
+                achievements: this.game.achievements?.getUnlockedAchievements()?.map(a => a.id) || [],
                 modes: {}
             };
 

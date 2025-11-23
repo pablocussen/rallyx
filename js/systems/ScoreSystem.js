@@ -1,6 +1,13 @@
 /**
  * Sistema de Puntuación y Combos
- * Gestiona puntos, multiplicadores y estadísticas
+ * Gestiona puntos, multiplicadores y estadísticas del jugador
+ *
+ * @class ScoreSystem
+ * @description Sistema central de puntuación que maneja:
+ * - Puntos base y high scores
+ * - Sistema de combos con multiplicadores
+ * - Estadísticas del jugador
+ * - Persistencia de datos en localStorage
  */
 
 import { CONFIG } from '../config.js';

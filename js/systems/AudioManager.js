@@ -1,6 +1,12 @@
 /**
- * Sistema de Audio
+ * Sistema de Audio Optimizado
  * Gestiona música y efectos de sonido usando Web Audio API
+ *
+ * @class AudioManager
+ * @description Sistema de audio con optimizaciones:
+ * - Límite de canales simultáneos
+ * - Pooling de nodos de audio
+ * - Prevención de spam de sonidos
  */
 
 export class AudioManager {
@@ -11,6 +17,12 @@ export class AudioManager {
         this.sfxGain = null;
         this.enabled = true;
         this.sounds = {};
+
+        // Optimizaciones de audio
+        this.maxConcurrentSounds = 8; // Máximo de sonidos simultáneos
+        this.activeSounds = new Set();
+        this.soundCooldowns = new Map(); // Anti-spam
+        this.minSoundInterval = 50; // ms mínimo entre sonidos del mismo tipo
 
         this.init();
     }
@@ -55,9 +67,62 @@ export class AudioManager {
         }
     }
 
-    // Generar tonos sintéticos
-    playTone(frequency, duration = 0.1, type = 'sine', gain = 0.3) {
+    /**
+     * Verifica si se puede reproducir un sonido (anti-spam)
+     * @param {string} soundId - ID del sonido
+     * @returns {boolean}
+     * @private
+     */
+    _canPlaySound(soundId) {
+        const now = Date.now();
+        const lastPlayed = this.soundCooldowns.get(soundId) || 0;
+
+        if (now - lastPlayed < this.minSoundInterval) {
+            return false; // Cooldown activo
+        }
+
+        if (this.activeSounds.size >= this.maxConcurrentSounds) {
+            return false; // Demasiados sonidos simultáneos
+        }
+
+        return true;
+    }
+
+    /**
+     * Registra que un sonido fue reproducido
+     * @param {string} soundId - ID del sonido
+     * @param {Object} soundRef - Referencia al oscillator/nodo
+     * @private
+     */
+    _registerSound(soundId, soundRef) {
+        this.soundCooldowns.set(soundId, Date.now());
+        this.activeSounds.add(soundRef);
+    }
+
+    /**
+     * Limpia un sonido terminado
+     * @param {Object} soundRef - Referencia al oscillator/nodo
+     * @private
+     */
+    _cleanupSound(soundRef) {
+        this.activeSounds.delete(soundRef);
+    }
+
+    /**
+     * Genera tonos sintéticos con limitación de canales
+     * @param {number} frequency - Frecuencia en Hz
+     * @param {number} duration - Duración en segundos
+     * @param {string} type - Tipo de onda (sine, square, etc)
+     * @param {number} gain - Volumen
+     * @param {string} soundId - ID para anti-spam (opcional)
+     */
+    playTone(frequency, duration = 0.1, type = 'sine', gain = 0.3, soundId = null) {
         if (!this.enabled) return;
+
+        // Verificar anti-spam si se proporciona soundId
+        if (soundId && !this._canPlaySound(soundId)) {
+            return;
+        }
 
         const oscillator = this.context.createOscillator();
         const gainNode = this.context.createGain();
@@ -73,6 +138,18 @@ export class AudioManager {
 
         oscillator.start(this.context.currentTime);
         oscillator.stop(this.context.currentTime + duration);
+
+        // Registrar sonido activo
+        if (soundId) {
+            this._registerSound(soundId, oscillator);
+        } else {
+            this.activeSounds.add(oscillator);
+        }
+
+        // Cleanup automático cuando termine
+        oscillator.addEventListener('ended', () => {
+            this._cleanupSound(oscillator);
+        });
     }
 
     // Efectos de sonido específicos del juego
