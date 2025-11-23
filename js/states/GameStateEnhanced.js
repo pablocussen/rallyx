@@ -88,18 +88,31 @@ export class GameStateEnhanced {
             this.gameModeManager.startMode('classic', playerLevel);
         }
 
-        // Iniciar música
-        this.musicEngine.init();
-        this.musicEngine.start(this.gameMode);
-
-        // Verificar tutorial
-        if (this.tutorialSystem.shouldShow() && this.gameMode === 'classic') {
-            this.tutorialSystem.start();
-            this.addNotification('Tutorial iniciado', 'info');
+        // Iniciar música (con manejo de errores)
+        try {
+            this.musicEngine.init();
+            this.musicEngine.start(this.gameMode);
+        } catch (error) {
+            console.warn('Error al inicializar música:', error);
+            // El juego continúa sin música
         }
 
-        // Registrar inicio de sesión en AI
-        this.aiManager.loadProfile();
+        // Verificar tutorial (con manejo de errores)
+        try {
+            if (this.tutorialSystem && this.tutorialSystem.shouldShow() && this.gameMode === 'classic') {
+                this.tutorialSystem.start();
+                this.addNotification('Tutorial iniciado', 'info');
+            }
+        } catch (error) {
+            console.warn('Error al iniciar tutorial:', error);
+        }
+
+        // Registrar inicio de sesión en AI (con manejo de errores)
+        try {
+            this.aiManager.loadProfile();
+        } catch (error) {
+            console.warn('Error al cargar perfil de AI:', error);
+        }
 
         this.setupLevel();
     }
@@ -581,7 +594,7 @@ export class GameStateEnhanced {
             flagsCollected: this.game.score.stats.flagsCollected,
             maxCombo: this.comboSystem.maxCombo,
             powerupsUsed: this.game.score.stats.powerupsUsed,
-            enemiesAvoided: this.game.score.stats.enemiesAvoided,
+            enemiesAvoided: this.game.score.stats.enemiesDodged,
             level: this.level,
             perfectLevel: this.perfectLevel,
             playerLevel: this.progressionSystem.level,
@@ -658,7 +671,7 @@ export class GameStateEnhanced {
             survivalTime: Date.now() - this.gameStartTime,
             combo: this.comboSystem.combo,
             health: this.player.health,
-            enemiesAvoided: this.game.score.stats.enemiesAvoided,
+            enemiesAvoided: this.game.score.stats.enemiesDodged,
             flagsCollected: this.game.score.stats.flagsCollected,
             powerupsCollected: this.game.score.stats.powerupsUsed
         };
@@ -696,22 +709,28 @@ export class GameStateEnhanced {
     }
 
     checkSkinUnlocks() {
-        const playerStats = {
-            level: this.progressionSystem.level,
-            bestScore: this.leaderboardSystem.getPersonalBest('overall')?.score || 0,
-            currentStreak: this.streakSystem.currentStreak,
-            longestStreak: this.streakSystem.longestStreak,
-            maxCombo: this.comboSystem.stats.longestCombo,
-            totalXp: this.progressionSystem.totalXp,
-            missionsCompleted: this.missionSystem.missionsCompleted,
-            achievements: this.game.achievements.unlockedAchievements.map(a => a.id),
-            modes: {}
-        };
+        try {
+            const playerStats = {
+                level: this.progressionSystem?.level || 1,
+                bestScore: this.leaderboardSystem?.getPersonalBest('overall')?.score || 0,
+                currentStreak: this.streakSystem?.currentStreak || 0,
+                longestStreak: this.streakSystem?.longestStreak || 0,
+                maxCombo: this.comboSystem?.maxCombo || 0,
+                totalXp: this.progressionSystem?.totalXp || 0,
+                missionsCompleted: this.missionSystem?.missionsCompleted || 0,
+                achievements: this.game.achievements?.getAllAchievements()?.filter(a => a.unlocked).map(a => a.id) || [],
+                modes: {}
+            };
 
-        const newUnlocks = this.skinManager.checkUnlockConditions(playerStats);
-        newUnlocks.forEach(unlock => {
-            this.addNotification(`🎨 Skin desbloqueado: ${unlock.skin.name}!`, 'unlock');
-        });
+            const newUnlocks = this.skinManager.checkUnlockConditions(playerStats);
+            if (newUnlocks && newUnlocks.length > 0) {
+                newUnlocks.forEach(unlock => {
+                    this.addNotification(`🎨 Skin desbloqueado: ${unlock.skin.name}!`, 'unlock');
+                });
+            }
+        } catch (error) {
+            console.warn('Error al verificar desbloqueos de skins:', error);
+        }
     }
 
     addNotification(message, type = 'info') {
