@@ -20,6 +20,17 @@ export class TutorialSystem {
         this.currentStep = 0;
         this.stepsCompleted = [];
 
+        // Tracking de movimiento para el tutorial
+        this.movementTracking = {
+            movedUp: false,
+            movedDown: false,
+            movedLeft: false,
+            movedRight: false
+        };
+
+        // Para detectar "presiona cualquier tecla"
+        this.anyKeyPressed = false;
+
         // Pasos del tutorial
         this.steps = [
             {
@@ -27,7 +38,7 @@ export class TutorialSystem {
                 title: '¡Bienvenido a Rally X!',
                 description: 'Aprende las mecánicas básicas para dominar el juego.',
                 objective: 'Leer mensaje',
-                checkpoint: () => true, // Automático
+                checkpoint: () => this.anyKeyPressed, // Espera tecla
                 hint: 'Presiona cualquier tecla para continuar',
                 highlight: null,
                 autoComplete: false
@@ -37,9 +48,11 @@ export class TutorialSystem {
                 title: 'Movimiento',
                 description: 'Usa WASD o las flechas para moverte.',
                 objective: 'Muévete en todas las direcciones',
-                checkpoint: (stats) => {
-                    return stats.movedUp && stats.movedDown &&
-                           stats.movedLeft && stats.movedRight;
+                checkpoint: () => {
+                    return this.movementTracking.movedUp &&
+                           this.movementTracking.movedDown &&
+                           this.movementTracking.movedLeft &&
+                           this.movementTracking.movedRight;
                 },
                 hint: '↑ ↓ ← → o W A S D',
                 highlight: 'player',
@@ -196,6 +209,16 @@ export class TutorialSystem {
 
         this.active = true;
         this.currentStep = 0;
+
+        // Resetear tracking
+        this.movementTracking = {
+            movedUp: false,
+            movedDown: false,
+            movedLeft: false,
+            movedRight: false
+        };
+        this.anyKeyPressed = false;
+
         console.log('🎓 Tutorial iniciado');
         return true;
     }
@@ -216,6 +239,17 @@ export class TutorialSystem {
      */
     update(gameStats) {
         if (!this.active || this.completed) return null;
+
+        // Actualizar tracking de movimiento (acumulativo)
+        if (gameStats.movedUp) this.movementTracking.movedUp = true;
+        if (gameStats.movedDown) this.movementTracking.movedDown = true;
+        if (gameStats.movedLeft) this.movementTracking.movedLeft = true;
+        if (gameStats.movedRight) this.movementTracking.movedRight = true;
+
+        // Detectar si se presionó cualquier tecla
+        if (gameStats.anyKeyPressed) {
+            this.anyKeyPressed = true;
+        }
 
         const currentStepData = this.steps[this.currentStep];
 
@@ -385,6 +419,16 @@ export class TutorialSystem {
         this.currentStep = 0;
         this.stepsCompleted = [];
         this.tipsShown = {};
+
+        // Resetear tracking
+        this.movementTracking = {
+            movedUp: false,
+            movedDown: false,
+            movedLeft: false,
+            movedRight: false
+        };
+        this.anyKeyPressed = false;
+
         this.saveProgress();
 
         console.log('Tutorial reiniciado');
