@@ -678,11 +678,15 @@ export class GameStateEnhanced {
     }
 
     getTutorialStats() {
+        // Detectar si se presionó cualquier tecla
+        const anyKeyPressed = Object.keys(this.game.input.keys).some(key => this.game.input.keys[key]);
+
         return {
             movedUp: this.game.input.isKeyDown(['w', 'W', 'ArrowUp']),
             movedDown: this.game.input.isKeyDown(['s', 'S', 'ArrowDown']),
             movedLeft: this.game.input.isKeyDown(['a', 'A', 'ArrowLeft']),
             movedRight: this.game.input.isKeyDown(['d', 'D', 'ArrowRight']),
+            anyKeyPressed: anyKeyPressed,
             flagsCollected: this.game.score.stats.flagsCollected,
             survivalTime: Date.now() - this.levelStartTime,
             powerupsCollected: this.game.score.stats.powerupsUsed,
