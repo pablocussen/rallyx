@@ -1,7 +1,7 @@
 # Netlify Configuration for Rally X
 [build]
-  publish = "."
-  command = "echo 'No build needed - static site'"
+  publish = "dist"
+  command = "npm run build"
 
 [[headers]]
   for = "/*"
