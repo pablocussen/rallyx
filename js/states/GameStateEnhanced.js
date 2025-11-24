@@ -322,14 +322,20 @@ export class GameStateEnhanced {
 
         // Actualizar tutorial
         if (this.tutorialSystem.active) {
-            const tutorialUpdate = this.tutorialSystem.update(this.getTutorialStats());
-            if (tutorialUpdate && tutorialUpdate.stepCompleted) {
-                this.addNotification(`✅ ${tutorialUpdate.step.title}`, 'success');
-            }
-            if (tutorialUpdate && tutorialUpdate.tutorialCompleted) {
-                this.addNotification('🎉 Tutorial completado!', 'success');
-                if (tutorialUpdate.rewards) {
-                    this.progressionSystem.addXP(tutorialUpdate.rewards.xp);
+            // Detectar ESC para saltar tutorial
+            if (this.game.input.isKeyDown(['Escape', 'Esc'])) {
+                this.tutorialSystem.skip();
+                this.addNotification('Tutorial saltado', 'info');
+            } else {
+                const tutorialUpdate = this.tutorialSystem.update(this.getTutorialStats());
+                if (tutorialUpdate && tutorialUpdate.stepCompleted) {
+                    this.addNotification(`✅ ${tutorialUpdate.step.title}`, 'success');
+                }
+                if (tutorialUpdate && tutorialUpdate.tutorialCompleted) {
+                    this.addNotification('🎉 Tutorial completado!', 'success');
+                    if (tutorialUpdate.rewards) {
+                        this.progressionSystem.addXP(tutorialUpdate.rewards.xp);
+                    }
                 }
             }
         }
@@ -963,47 +969,47 @@ export class GameStateEnhanced {
 
         ctx.save();
 
-        // Semi-transparent overlay
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(0, 0, CONFIG.CANVAS.WIDTH, CONFIG.CANVAS.HEIGHT);
-
-        // Tutorial box
-        const boxWidth = 600;
-        const boxHeight = 200;
+        // Tutorial box compacto en la parte superior (sin overlay oscuro completo)
+        const boxWidth = 700;
+        const boxHeight = 140;
         const boxX = CONFIG.CANVAS.WIDTH / 2 - boxWidth / 2;
-        const boxY = CONFIG.CANVAS.HEIGHT / 2 - boxHeight / 2;
+        const boxY = 20; // Posicionado arriba
 
-        ctx.fillStyle = 'rgba(10, 14, 39, 0.95)';
+        // Fondo del box con transparencia
+        ctx.fillStyle = 'rgba(10, 14, 39, 0.92)';
         ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
 
+        // Borde brillante
         ctx.strokeStyle = CONFIG.UI.PRIMARY_COLOR;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2;
         ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
 
-        // Title
-        ctx.font = `bold 32px ${CONFIG.UI.FONT_FAMILY}`;
+        // Título más pequeño
+        ctx.font = `bold 24px ${CONFIG.UI.FONT_FAMILY}`;
         ctx.fillStyle = CONFIG.UI.PRIMARY_COLOR;
         ctx.textAlign = 'center';
-        ctx.fillText(step.title, CONFIG.CANVAS.WIDTH / 2, boxY + 40);
+        ctx.fillText(step.title, CONFIG.CANVAS.WIDTH / 2, boxY + 30);
 
-        // Description
+        // Objetivo
         ctx.font = `18px ${CONFIG.UI.FONT_FAMILY}`;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(step.description, CONFIG.CANVAS.WIDTH / 2, boxY + 80);
-
-        // Objective
-        ctx.font = `bold 20px ${CONFIG.UI.FONT_FAMILY}`;
         ctx.fillStyle = CONFIG.UI.SUCCESS_COLOR;
-        ctx.fillText(`Objetivo: ${step.objective}`, CONFIG.CANVAS.WIDTH / 2, boxY + 120);
+        ctx.fillText(`Objetivo: ${step.objective}`, CONFIG.CANVAS.WIDTH / 2, boxY + 60);
 
         // Hint
         ctx.font = `16px ${CONFIG.UI.FONT_FAMILY}`;
         ctx.fillStyle = CONFIG.UI.WARNING_COLOR;
-        ctx.fillText(step.hint, CONFIG.CANVAS.WIDTH / 2, boxY + 155);
+        ctx.fillText(step.hint, CONFIG.CANVAS.WIDTH / 2, boxY + 90);
 
         // Progress
-        const progress = this.tutorialSystem.getProgress();
-        ctx.fillText(`Paso ${step.stepNumber} de ${step.totalSteps}`, CONFIG.CANVAS.WIDTH / 2, boxY + 180);
+        ctx.font = `14px ${CONFIG.UI.FONT_FAMILY}`;
+        ctx.fillStyle = '#888';
+        ctx.fillText(`Paso ${step.stepNumber} de ${step.totalSteps}`, CONFIG.CANVAS.WIDTH / 2, boxY + 120);
+
+        // Agregar botón de saltar (ESC)
+        ctx.fillStyle = '#666';
+        ctx.font = `12px ${CONFIG.UI.FONT_FAMILY}`;
+        ctx.textAlign = 'right';
+        ctx.fillText('Presiona ESC para saltar tutorial', boxX + boxWidth - 10, boxY + boxHeight - 10);
 
         ctx.restore();
     }
