@@ -511,6 +511,14 @@ export class GameStateEnhanced {
                     this.game.audio.playSound('collision');
                     this.musicEngine.triggerEvent('death');
 
+                    // Aplicar knockback para separar del enemigo
+                    const dx = this.player.x - enemy.x;
+                    const dy = this.player.y - enemy.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const knockbackForce = 8;
+                    this.player.vx = (dx / dist) * knockbackForce;
+                    this.player.vy = (dy / dist) * knockbackForce;
+
                     // Verificar Game Over
                     if (this.player.health <= 0) {
                         const modeResult = this.gameModeManager.handleDeath();
@@ -969,47 +977,36 @@ export class GameStateEnhanced {
 
         ctx.save();
 
-        // Tutorial box compacto en la parte superior (sin overlay oscuro completo)
-        const boxWidth = 700;
-        const boxHeight = 140;
-        const boxX = CONFIG.CANVAS.WIDTH / 2 - boxWidth / 2;
-        const boxY = 20; // Posicionado arriba
+        // Tutorial minimalista en esquina superior derecha
+        const boxWidth = 280;
+        const boxHeight = 80;
+        const boxX = CONFIG.CANVAS.WIDTH - boxWidth - 10;
+        const boxY = 10;
 
-        // Fondo del box con transparencia
-        ctx.fillStyle = 'rgba(10, 14, 39, 0.92)';
+        // Fondo semi-transparente
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
         ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
 
-        // Borde brillante
+        // Borde sutil
         ctx.strokeStyle = CONFIG.UI.PRIMARY_COLOR;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1;
         ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
 
-        // Título más pequeño
-        ctx.font = `bold 24px ${CONFIG.UI.FONT_FAMILY}`;
-        ctx.fillStyle = CONFIG.UI.PRIMARY_COLOR;
-        ctx.textAlign = 'center';
-        ctx.fillText(step.title, CONFIG.CANVAS.WIDTH / 2, boxY + 30);
-
-        // Objetivo
-        ctx.font = `18px ${CONFIG.UI.FONT_FAMILY}`;
+        // Objetivo compacto
+        ctx.font = `bold 14px ${CONFIG.UI.FONT_FAMILY}`;
         ctx.fillStyle = CONFIG.UI.SUCCESS_COLOR;
-        ctx.fillText(`Objetivo: ${step.objective}`, CONFIG.CANVAS.WIDTH / 2, boxY + 60);
+        ctx.textAlign = 'left';
+        ctx.fillText(step.objective, boxX + 10, boxY + 25);
 
-        // Hint
-        ctx.font = `16px ${CONFIG.UI.FONT_FAMILY}`;
-        ctx.fillStyle = CONFIG.UI.WARNING_COLOR;
-        ctx.fillText(step.hint, CONFIG.CANVAS.WIDTH / 2, boxY + 90);
-
-        // Progress
-        ctx.font = `14px ${CONFIG.UI.FONT_FAMILY}`;
-        ctx.fillStyle = '#888';
-        ctx.fillText(`Paso ${step.stepNumber} de ${step.totalSteps}`, CONFIG.CANVAS.WIDTH / 2, boxY + 120);
-
-        // Agregar botón de saltar (ESC)
-        ctx.fillStyle = '#666';
+        // Hint pequeño
         ctx.font = `12px ${CONFIG.UI.FONT_FAMILY}`;
-        ctx.textAlign = 'right';
-        ctx.fillText('Presiona ESC para saltar tutorial', boxX + boxWidth - 10, boxY + boxHeight - 10);
+        ctx.fillStyle = CONFIG.UI.WARNING_COLOR;
+        ctx.fillText(step.hint, boxX + 10, boxY + 45);
+
+        // Progress minimalista
+        ctx.font = `10px ${CONFIG.UI.FONT_FAMILY}`;
+        ctx.fillStyle = '#666';
+        ctx.fillText(`${step.stepNumber}/${step.totalSteps} | ESC: skip`, boxX + 10, boxY + 65);
 
         ctx.restore();
     }

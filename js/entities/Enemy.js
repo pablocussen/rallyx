@@ -37,23 +37,39 @@ export class Enemy {
             // Actualizar target cada cierto tiempo
             this.pathUpdateTimer += deltaTime * 1000;
             if (this.pathUpdateTimer > CONFIG.ENEMY.UPDATE_PATH_INTERVAL) {
-                this.targetX = player.x;
-                this.targetY = player.y;
+                // PREDICCIÓN PRO: Anticipar movimiento del jugador
+                const predictionFactor = 0.4; // Qué tan adelante predecir
+                const playerSpeed = Math.sqrt(player.vx * player.vx + player.vy * player.vy);
+
+                if (playerSpeed > 0.5) {
+                    // Predecir posición futura del jugador
+                    const predictionDistance = playerSpeed * predictionFactor * 100;
+                    const playerAngle = Math.atan2(player.vy, player.vx);
+                    this.targetX = player.x + Math.cos(playerAngle) * predictionDistance;
+                    this.targetY = player.y + Math.sin(playerAngle) * predictionDistance;
+                } else {
+                    // Si el jugador está quieto, ir directo
+                    this.targetX = player.x;
+                    this.targetY = player.y;
+                }
+
                 this.pathUpdateTimer = 0;
             }
 
-            // Perseguir al jugador
+            // Perseguir al jugador con velocidad aumentada (más agresivo)
             const targetDx = this.targetX - this.x;
             const targetDy = this.targetY - this.y;
             const targetDistance = Math.sqrt(targetDx * targetDx + targetDy * targetDy);
 
             if (targetDistance > 0) {
-                this.vx = (targetDx / targetDistance) * CONFIG.ENEMY.CHASE_SPEED;
-                this.vy = (targetDy / targetDistance) * CONFIG.ENEMY.CHASE_SPEED;
+                // Velocidad adaptativa: más cerca = más rápido
+                const speedBoost = Math.min(1.5, 1 + (1 - distanceToPlayer / CONFIG.ENEMY.CHASE_RANGE) * 0.5);
+                this.vx = (targetDx / targetDistance) * CONFIG.ENEMY.CHASE_SPEED * speedBoost;
+                this.vy = (targetDy / targetDistance) * CONFIG.ENEMY.CHASE_SPEED * speedBoost;
             }
         } else {
             this.state = 'patrol';
-            // Movimiento de patrulla simple
+            // Movimiento de patrulla más inteligente
             // Los enemigos mantienen su dirección hasta chocar con un borde
         }
 
@@ -61,24 +77,28 @@ export class Enemy {
         this.x += this.vx;
         this.y += this.vy;
 
-        // Rebotar en bordes
+        // Rebotar en bordes con variación
         if (this.x <= 0 || this.x + this.width >= canvasWidth) {
             this.vx *= -1;
+            // Añadir variación al rebote para movimiento menos predecible
+            this.vy += (Math.random() - 0.5) * 2;
             this.x = Math.max(0, Math.min(this.x, canvasWidth - this.width));
         }
 
         if (this.y <= 0 || this.y + this.height >= canvasHeight) {
             this.vy *= -1;
+            // Añadir variación al rebote
+            this.vx += (Math.random() - 0.5) * 2;
             this.y = Math.max(0, Math.min(this.y, canvasHeight - this.height));
         }
 
         // Calcular ángulo
         this.angle = Math.atan2(this.vy, this.vx);
 
-        // Variación de velocidad en patrulla
+        // Variación de velocidad en patrulla (más errático)
         if (this.state === 'patrol') {
-            this.vx += (Math.random() - 0.5) * 0.1;
-            this.vy += (Math.random() - 0.5) * 0.1;
+            this.vx += (Math.random() - 0.5) * 0.2; // Más variación
+            this.vy += (Math.random() - 0.5) * 0.2;
 
             // Limitar velocidad
             const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
