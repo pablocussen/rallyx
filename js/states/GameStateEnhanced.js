@@ -59,8 +59,10 @@ export class GameStateEnhanced {
         this.nearMissCount = 0;
         this.previousFeverMode = false; // Para detectar cambios en FEVER MODE
 
-        // UI notifications
+        // UI notifications con sistema anti-spam
         this.notifications = [];
+        this.notificationGroups = new Map(); // Agrupar notificaciones similares
+        this.maxNotifications = 3; // Máximo 3 notificaciones en pantalla
 
         console.log('🚀 GameStateEnhanced inicializado con TODOS los sistemas revolucionarios + Visual FX IMPRESIONANTE');
     }
@@ -320,19 +322,26 @@ export class GameStateEnhanced {
             );
         }
 
-        // Actualizar tutorial
+        // Actualizar tutorial con auto-skip inteligente
         if (this.tutorialSystem.active) {
-            // Detectar ESC para saltar tutorial
-            if (this.game.input.isKeyDown(['Escape', 'Esc'])) {
+            // AUTO-SKIP: Si el jugador ya está jugando bien, saltar tutorial
+            const playerIsPlaying = this.game.score.stats.flagsCollected > 0 ||
+                                   this.game.score.score > 500;
+
+            if (playerIsPlaying) {
+                this.tutorialSystem.skip();
+                console.log('Tutorial auto-skip: jugador ya sabe jugar');
+            } else if (this.game.input.isKeyDown(['Escape', 'Esc'])) {
+                // Detectar ESC para saltar tutorial manualmente
                 this.tutorialSystem.skip();
                 this.addNotification('Tutorial saltado', 'info');
             } else {
                 const tutorialUpdate = this.tutorialSystem.update(this.getTutorialStats());
                 if (tutorialUpdate && tutorialUpdate.stepCompleted) {
-                    this.addNotification(`✅ ${tutorialUpdate.step.title}`, 'success');
+                    // No mostrar notificaciones de pasos completados (reduce spam)
                 }
                 if (tutorialUpdate && tutorialUpdate.tutorialCompleted) {
-                    this.addNotification('🎉 Tutorial completado!', 'success');
+                    this.addNotification('Tutorial completado', 'success');
                     if (tutorialUpdate.rewards) {
                         this.progressionSystem.addXP(tutorialUpdate.rewards.xp);
                     }
@@ -752,12 +761,35 @@ export class GameStateEnhanced {
     }
 
     addNotification(message, type = 'info') {
-        this.notifications.push({
+        // ANTI-SPAM: Filtrar notificaciones molestas
+        const spamKeywords = ['Level UP', 'Nivel'];
+        const isSpam = spamKeywords.some(keyword => message.includes(keyword));
+
+        if (isSpam) {
+            // Agrupar level ups en una sola notificación
+            const existingLevelUp = this.notifications.find(n => n.type === 'levelup');
+            if (existingLevelUp) {
+                existingLevelUp.count = (existingLevelUp.count || 1) + 1;
+                existingLevelUp.timestamp = Date.now(); // Refresh
+                return; // No agregar duplicado
+            }
+        }
+
+        // Limitar cantidad de notificaciones
+        if (this.notifications.length >= this.maxNotifications) {
+            this.notifications.shift(); // Remover la más vieja
+        }
+
+        // Agregar notificación prioritaria
+        const notification = {
             message,
             type,
             timestamp: Date.now(),
-            duration: 3000
-        });
+            duration: type === 'levelup' ? 2000 : 1500, // Level ups más cortos
+            count: 1
+        };
+
+        this.notifications.push(notification);
     }
 
     updateNotifications(deltaTime) {
@@ -868,6 +900,26 @@ export class GameStateEnhanced {
         ctx.textAlign = 'center';
         const modeInfo = this.gameModeManager.getCurrentMode();
         ctx.fillText(`${modeInfo.info.icon} ${modeInfo.name} - LVL ${this.level}`, CONFIG.CANVAS.WIDTH / 2, 20);
+
+        // OBJETIVO PRINCIPAL - Grande y claro
+        const flagsRemaining = this.flags.length;
+        if (flagsRemaining > 0) {
+            ctx.save();
+            ctx.font = `bold 20px ${CONFIG.UI.FONT_FAMILY}`;
+            ctx.fillStyle = '#00ff00';
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#00ff00';
+            ctx.fillText(`🎯 OBJETIVO: Recoger ${flagsRemaining} bandera${flagsRemaining > 1 ? 's' : ''}`, CONFIG.CANVAS.WIDTH / 2, 55);
+            ctx.restore();
+        } else if (this.gameModeManager.getCurrentSettings().hasLevels) {
+            ctx.save();
+            ctx.font = `bold 22px ${CONFIG.UI.FONT_FAMILY}`;
+            ctx.fillStyle = '#ffff00';
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#ffff00';
+            ctx.fillText('✨ NIVEL COMPLETO ✨', CONFIG.CANVAS.WIDTH / 2, 55);
+            ctx.restore();
+        }
 
         // Tiempo (si aplica)
         if (this.gameModeManager.getCurrentSettings().hasTimeLimit) {
@@ -1017,7 +1069,7 @@ export class GameStateEnhanced {
         this.notifications.forEach((notif, index) => {
             const elapsed = Date.now() - notif.timestamp;
             const progress = elapsed / notif.duration;
-            const y = 150 + index * 40;
+            const y = 120 + index * 50;
 
             let alpha = 1;
             if (progress < 0.1) {
@@ -1028,17 +1080,35 @@ export class GameStateEnhanced {
 
             ctx.globalAlpha = alpha;
 
+            // Box futurista con borde
+            const boxWidth = 300;
+            const boxX = CONFIG.CANVAS.WIDTH / 2 - boxWidth / 2;
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            ctx.fillRect(boxX, y - 25, boxWidth, 40);
+
             let color = CONFIG.UI.PRIMARY_COLOR;
             if (notif.type === 'success') color = CONFIG.UI.SUCCESS_COLOR;
             else if (notif.type === 'combo') color = '#ffff00';
             else if (notif.type === 'points') color = CONFIG.UI.WARNING_COLOR;
+            else if (notif.type === 'levelup') color = '#00ffff';
 
-            ctx.font = `bold 20px ${CONFIG.UI.FONT_FAMILY}`;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(boxX, y - 25, boxWidth, 40);
+
+            // Texto
+            ctx.font = `bold 18px ${CONFIG.UI.FONT_FAMILY}`;
             ctx.fillStyle = color;
             ctx.textAlign = 'center';
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = 8;
             ctx.shadowColor = color;
-            ctx.fillText(notif.message, CONFIG.CANVAS.WIDTH / 2, y);
+
+            // Si hay count, mostrar
+            const displayMessage = notif.count > 1 ?
+                `${notif.message} x${notif.count}` : notif.message;
+
+            ctx.fillText(displayMessage, CONFIG.CANVAS.WIDTH / 2, y);
         });
 
         ctx.restore();
