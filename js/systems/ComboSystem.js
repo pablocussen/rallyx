@@ -12,20 +12,20 @@
 
 export class ComboSystem {
     constructor() {
-        // Estado del combo
+        // Estado del combo - MÁS GENEROSO!
         this.combo = 0;
         this.maxCombo = 0;
         this.comboMultiplier = 1.0;
-        this.timeWindow = 3000; // 3 segundos inicial
-        this.minTimeWindow = 500; // Mínimo 0.5 segundos
-        this.timeWindowDecay = 0.9; // Se reduce 10% cada combo
+        this.timeWindow = 4000; // 4 segundos inicial (más tiempo)
+        this.minTimeWindow = 800; // Mínimo 0.8 segundos (más tiempo)
+        this.timeWindowDecay = 0.95; // Se reduce 5% cada combo (más suave)
         this.lastActionTime = 0;
         this.isActive = false;
 
         // Fever Mode (activado en combos altos)
         this.feverMode = false;
-        this.feverThreshold = 10; // Combo 10+ = fever
-        this.feverMultiplier = 2.0;
+        this.feverThreshold = 8; // Combo 8+ = fever (más fácil)
+        this.feverMultiplier = 2.5; // Más recompensa!
 
         // Tipos de acciones que cuentan para combo
         this.comboActions = {
@@ -37,14 +37,16 @@ export class ComboSystem {
             chainReaction: { points: 200, weight: 2.0 } // Múltiples acciones en 1 segundo
         };
 
-        // Milestones de combo con recompensas especiales
+        // Milestones de combo con recompensas especiales - MÁS FRECUENTES Y GENEROSOS!
         this.comboMilestones = {
-            5: { name: 'Nice!', bonus: 500, color: '#00ff00' },
-            10: { name: 'Great!!', bonus: 1000, color: '#00ffff', enterFever: true },
-            15: { name: 'Excellent!!!', bonus: 2000, color: '#ffff00' },
-            20: { name: 'AMAZING!!!!', bonus: 5000, color: '#ff8800' },
-            30: { name: 'GODLIKE!!!!!', bonus: 10000, color: '#ff0088' },
-            50: { name: '🔥 LEGENDARY 🔥', bonus: 25000, color: '#ff0000' }
+            3: { name: '✨ Nice!', bonus: 200, color: '#00ff00' },
+            5: { name: '⚡ Great!', bonus: 500, color: '#00ffaa' },
+            8: { name: '🔥 FEVER MODE!', bonus: 1000, color: '#00ffff', enterFever: true },
+            10: { name: '💥 Excellent!!', bonus: 1500, color: '#ffff00' },
+            15: { name: '🌟 AMAZING!!!', bonus: 3000, color: '#ff8800' },
+            20: { name: '👑 GODLIKE!!!!', bonus: 6000, color: '#ff0088' },
+            30: { name: '🚀 UNSTOPPABLE!!!!!', bonus: 12000, color: '#ff00ff' },
+            50: { name: '🔥🔥 LEGENDARY 🔥🔥', bonus: 30000, color: '#ff0000' }
         };
 
         // Historial reciente de acciones

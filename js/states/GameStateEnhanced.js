@@ -55,8 +55,9 @@ export class GameStateEnhanced {
         // Estado del juego
         this.gameMode = 'classic';
         this.frozen = false; // Para freeze frames
-        this.nearMissDistance = 50;
+        this.nearMissDistance = 80; // Más grande para más near misses!
         this.nearMissCount = 0;
+        this.nearMissTracked = new Set(); // Para evitar múltiples near miss del mismo enemigo
         this.previousFeverMode = false; // Para detectar cambios en FEVER MODE
 
         // UI notifications con sistema anti-spam
@@ -271,8 +272,25 @@ export class GameStateEnhanced {
             return;
         }
 
+        // Guardar estado previo del dash
+        const wasDashing = this.player.isDashing;
+
         // Actualizar jugador
         this.player.update(deltaTime, this.game.input, CONFIG.CANVAS.WIDTH, CONFIG.CANVAS.HEIGHT);
+
+        // Detectar inicio de dash para efectos
+        if (this.player.isDashing && !wasDashing) {
+            // ¡DASH ACTIVADO! Efectos épicos
+            this.screenEffects.freezeFrame(30); // Mini freeze
+            this.game.particles.explosion(
+                this.player.x + this.player.width / 2,
+                this.player.y + this.player.height / 2
+            );
+            // Audio feedback (si hay sonido de dash)
+            if (this.game.audio.sounds && this.game.audio.sounds.powerup_collect) {
+                this.game.audio.playSound('powerup_collect');
+            }
+        }
 
         // Actualizar banderas
         this.flags.forEach(flag => flag.update(deltaTime));
@@ -311,14 +329,25 @@ export class GameStateEnhanced {
         // Actualizar partículas
         this.game.particles.update(deltaTime);
 
-        // Trail del jugador (mejorado con skin effects)
+        // Trail del jugador (mejorado con skin effects y dash)
         const skinEffects = this.skinManager.getCurrentEffects();
-        if (Math.random() < 0.3) {
+        const trailFrequency = this.player.isDashing ? 0.8 : 0.3; // Más partículas en dash
+        if (Math.random() < trailFrequency) {
             const colors = this.skinManager.getCurrentColors();
+            const trailColor = this.player.isDashing ? '#00ffff' : colors.primary;
             this.game.particles.trail(
                 this.player.x + this.player.width / 2,
                 this.player.y + this.player.height / 2,
-                colors.primary
+                trailColor
+            );
+        }
+
+        // Partículas extra durante dash
+        if (this.player.isDashing && Math.random() < 0.5) {
+            this.game.particles.collect(
+                this.player.x + this.player.width / 2,
+                this.player.y + this.player.height / 2,
+                '#00ffff'
             );
         }
 
@@ -415,9 +444,18 @@ export class GameStateEnhanced {
                     // Visual FX Manager (explosión espectacular de combo)
                     this.visualFX.comboMilestone(flagX, flagY, comboResult.combo, comboResult.milestone);
 
-                    this.addNotification(`${comboResult.milestone.name}`, 'combo');
+                    this.addNotification(`${comboResult.milestone.name} +${comboResult.milestone.bonus}`, 'combo');
                     this.screenEffects.comboMilestone(comboResult.combo);
                     this.musicEngine.triggerEvent('milestone');
+
+                    // SLOW-MOTION ÉPICO en milestones importantes!
+                    if (comboResult.combo >= 15) {
+                        this.screenEffects.freezeFrame(150); // Freeze largo
+                    } else if (comboResult.combo >= 8) {
+                        this.screenEffects.freezeFrame(100); // Freeze mediano
+                    } else if (comboResult.combo >= 5) {
+                        this.screenEffects.freezeFrame(60); // Freeze corto
+                    }
                 }
 
                 // Feedback visual de puntos
@@ -480,13 +518,25 @@ export class GameStateEnhanced {
                 enemy.x, enemy.y
             );
 
-            // Near miss
-            if (distance < this.nearMissDistance && distance > 20) {
-                this.nearMissCount++;
-                this.comboSystem.registerAction('nearMiss');
-                this.missionSystem.updateProgress('nearMisses', 1);
-                this.screenEffects.nearMiss();
-                this.addNotification('+150 Near Miss!', 'bonus');
+            // Near miss - más generoso y no repetido
+            const enemyId = `${enemy.x}_${enemy.y}`;
+            if (distance < this.nearMissDistance && distance > 35) {
+                if (!this.nearMissTracked.has(enemyId)) {
+                    this.nearMissTracked.add(enemyId);
+                    this.nearMissCount++;
+                    const comboResult = this.comboSystem.registerAction('nearMiss');
+                    this.missionSystem.updateProgress('nearMisses', 1);
+                    this.screenEffects.nearMiss();
+                    this.addNotification(`💨 Near Miss! +${comboResult.points}`, 'bonus');
+
+                    // Efecto de slow-motion suave
+                    if (comboResult.combo > 5) {
+                        this.screenEffects.freezeFrame(50); // Mini freeze
+                    }
+                }
+            } else if (distance > this.nearMissDistance * 1.5) {
+                // Si se aleja suficiente, resetear para poder volver a hacer near miss
+                this.nearMissTracked.delete(enemyId);
             }
 
             // Colisión real
@@ -934,18 +984,42 @@ export class GameStateEnhanced {
         ctx.fillStyle = CONFIG.UI.DANGER_COLOR;
         ctx.fillText('♥'.repeat(this.player.health), 20, 60);
 
-        // Player level y XP bar
+        // Dash cooldown indicator
+        ctx.font = `14px ${CONFIG.UI.FONT_FAMILY}`;
+        const dashY = 125;
+        if (this.player.dashAvailable) {
+            ctx.fillStyle = '#00ffff';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#00ffff';
+            ctx.fillText('⚡ DASH: READY [SPACE]', 20, dashY);
+            ctx.shadowBlur = 0;
+        } else {
+            const cooldownPercent = 1 - (this.player.dashCooldown / CONFIG.PLAYER.DASH_COOLDOWN);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillText('⚡ DASH: ', 20, dashY);
+            // Barra de cooldown
+            const barW = 80;
+            const barH = 6;
+            const barX = 90;
+            const barY = dashY - 10;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fillRect(barX, barY, barW, barH);
+            ctx.fillStyle = '#00ffff';
+            ctx.fillRect(barX, barY, barW * cooldownPercent, barH);
+        }
+
+        // Player level y XP bar (movido más abajo)
         ctx.font = `16px ${CONFIG.UI.FONT_FAMILY}`;
         ctx.fillStyle = CONFIG.UI.PRIMARY_COLOR;
-        ctx.fillText(`LVL ${this.progressionSystem.level}`, 20, 95);
+        ctx.fillText(`LVL ${this.progressionSystem.level}`, 20, 150);
 
         const xpPercent = this.progressionSystem.getXPPercentage() / 100;
         const barWidth = 150;
         const barHeight = 8;
         ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.fillRect(80, 98, barWidth, barHeight);
+        ctx.fillRect(80, 153, barWidth, barHeight);
         ctx.fillStyle = CONFIG.UI.PRIMARY_COLOR;
-        ctx.fillRect(80, 98, barWidth * xpPercent, barHeight);
+        ctx.fillRect(80, 153, barWidth * xpPercent, barHeight);
 
         // Combo (mejorado)
         const comboStatus = this.comboSystem.getStatus();

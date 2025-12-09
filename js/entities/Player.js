@@ -32,22 +32,54 @@ export class Player {
         };
 
         this.powerupTimers = {};
+
+        // Dash system (nueva mecánica!)
+        this.dashAvailable = true;
+        this.dashCooldown = 0;
+        this.isDashing = false;
+        this.dashTimer = 0;
     }
 
     update(deltaTime, input, canvasWidth, canvasHeight) {
         // Obtener movimiento del input
         const movement = input.getMovement();
 
-        // Aplicar aceleración
-        this.vx += movement.dx * CONFIG.PLAYER.ACCELERATION * this.speed;
-        this.vy += movement.dy * CONFIG.PLAYER.ACCELERATION * this.speed;
+        // DASH SYSTEM - Detectar Space/Shift para dash
+        if ((input.isKeyDown([' ', 'Shift']) || input.isKeyDown(['Space'])) && this.dashAvailable && !this.isDashing) {
+            this.activateDash(movement.dx, movement.dy);
+        }
 
-        // Aplicar fricción
-        this.vx *= CONFIG.PLAYER.FRICTION;
-        this.vy *= CONFIG.PLAYER.FRICTION;
+        // Actualizar cooldown de dash
+        if (!this.dashAvailable) {
+            this.dashCooldown -= deltaTime * 1000;
+            if (this.dashCooldown <= 0) {
+                this.dashAvailable = true;
+            }
+        }
+
+        // Actualizar estado de dash
+        if (this.isDashing) {
+            this.dashTimer -= deltaTime * 1000;
+            if (this.dashTimer <= 0) {
+                this.isDashing = false;
+            }
+        }
+
+        // Aplicar aceleración (más fuerte si está dashing)
+        const acceleration = this.isDashing ? CONFIG.PLAYER.ACCELERATION * 3 : CONFIG.PLAYER.ACCELERATION;
+        this.vx += movement.dx * acceleration * this.speed;
+        this.vy += movement.dy * acceleration * this.speed;
+
+        // Aplicar fricción (menos fricción durante dash)
+        const friction = this.isDashing ? 0.98 : CONFIG.PLAYER.FRICTION;
+        this.vx *= friction;
+        this.vy *= friction;
 
         // Limitar velocidad máxima
-        const maxSpeed = this.powerups.speed ? CONFIG.PLAYER.MAX_SPEED : this.speed;
+        let maxSpeed = this.powerups.speed ? CONFIG.PLAYER.MAX_SPEED * 1.5 : this.speed * 1.5;
+        if (this.isDashing) {
+            maxSpeed = CONFIG.PLAYER.DASH_SPEED;
+        }
         const currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
 
         if (currentSpeed > maxSpeed) {
@@ -120,15 +152,36 @@ export class Player {
     }
 
     draw(ctx) {
-        // Dibujar trail
+        // Dibujar trail (más intenso si está dashing)
         this.trail.forEach((t, i) => {
             ctx.save();
-            ctx.globalAlpha = t.alpha * 0.5;
-            ctx.fillStyle = CONFIG.PLAYER.TRAIL_COLOR;
-            const size = (i / this.trail.length) * 8;
+            const alpha = this.isDashing ? t.alpha * 0.8 : t.alpha * 0.5;
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = this.isDashing ? '#00ffff' : CONFIG.PLAYER.TRAIL_COLOR;
+            const size = this.isDashing ? (i / this.trail.length) * 15 : (i / this.trail.length) * 8;
             ctx.fillRect(t.x - size / 2, t.y - size / 2, size, size);
             ctx.restore();
         });
+
+        // Dibujar aura de dash
+        if (this.isDashing) {
+            ctx.save();
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 4;
+            ctx.globalAlpha = 0.6;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#00ffff';
+            ctx.beginPath();
+            ctx.arc(
+                this.x + this.width / 2,
+                this.y + this.height / 2,
+                this.width / 2 + 12,
+                0,
+                Math.PI * 2
+            );
+            ctx.stroke();
+            ctx.restore();
+        }
 
         // Dibujar escudo si está activo
         if (this.powerups.shield) {
@@ -160,10 +213,18 @@ export class Player {
         ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
         ctx.rotate(this.angle);
 
-        // Gradiente
+        // Glow si está dashing
+        if (this.isDashing) {
+            ctx.shadowBlur = 30;
+            ctx.shadowColor = '#00ffff';
+        }
+
+        // Gradiente (más brillante si está dashing)
         const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.width / 2);
-        gradient.addColorStop(0, CONFIG.PLAYER.COLOR);
-        gradient.addColorStop(1, 'rgba(0, 212, 255, 0.3)');
+        const color1 = this.isDashing ? '#00ffff' : CONFIG.PLAYER.COLOR;
+        const color2 = this.isDashing ? 'rgba(0, 255, 255, 0.5)' : 'rgba(0, 212, 255, 0.3)';
+        gradient.addColorStop(0, color1);
+        gradient.addColorStop(1, color2);
 
         ctx.fillStyle = gradient;
         ctx.beginPath();
@@ -174,8 +235,8 @@ export class Player {
         ctx.fill();
 
         // Borde
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = this.isDashing ? '#00ffff' : '#ffffff';
+        ctx.lineWidth = this.isDashing ? 3 : 2;
         ctx.stroke();
 
         ctx.restore();
@@ -202,6 +263,29 @@ export class Player {
         this.powerupTimers[type] = duration;
     }
 
+    activateDash(dx, dy) {
+        if (!this.dashAvailable || this.isDashing) return;
+
+        this.isDashing = true;
+        this.dashTimer = CONFIG.PLAYER.DASH_DURATION;
+        this.dashAvailable = false;
+        this.dashCooldown = CONFIG.PLAYER.DASH_COOLDOWN;
+
+        // Aplicar impulso en la dirección del movimiento
+        if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+            const angle = Math.atan2(dy, dx);
+            this.vx = Math.cos(angle) * CONFIG.PLAYER.DASH_SPEED;
+            this.vy = Math.sin(angle) * CONFIG.PLAYER.DASH_SPEED;
+        } else {
+            // Si no hay dirección, dash hacia adelante (dirección actual)
+            const currentAngle = this.angle || 0;
+            this.vx = Math.cos(currentAngle) * CONFIG.PLAYER.DASH_SPEED;
+            this.vy = Math.sin(currentAngle) * CONFIG.PLAYER.DASH_SPEED;
+        }
+
+        return true;
+    }
+
     reset(x, y) {
         this.x = x;
         this.y = y;
@@ -219,6 +303,10 @@ export class Player {
             magnet: false
         };
         this.powerupTimers = {};
+        this.dashAvailable = true;
+        this.dashCooldown = 0;
+        this.isDashing = false;
+        this.dashTimer = 0;
     }
 
     getBounds() {

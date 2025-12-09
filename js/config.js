@@ -16,26 +16,29 @@ export const CONFIG = {
     // Jugador
     PLAYER: {
         SIZE: 32,
-        BASE_SPEED: 5,
-        MAX_SPEED: 12,
+        BASE_SPEED: 6,
+        MAX_SPEED: 14,
         COLOR: '#00d4ff',
         TRAIL_COLOR: 'rgba(0, 212, 255, 0.4)',
         MAX_HEALTH: 3,
         INVINCIBILITY_TIME: 2000, // ms
-        ACCELERATION: 0.3,
-        FRICTION: 0.85
+        ACCELERATION: 0.6, // Más responsivo!
+        FRICTION: 0.88, // Mejor control
+        DASH_SPEED: 20, // Boost instantáneo
+        DASH_COOLDOWN: 3000, // 3 segundos
+        DASH_DURATION: 200 // 0.2 segundos
     },
 
-    // Enemigos
+    // Enemigos - MENOS AGRESIVOS AL INICIO
     ENEMY: {
         SIZE: 32,
-        BASE_SPEED: 2.5,
+        BASE_SPEED: 2.0, // Más lento
         COLORS: ['#ff4757', '#ff6348', '#ff7979', '#ee5a6f'],
-        CHASE_RANGE: 300,
-        PATROL_SPEED: 2,
-        CHASE_SPEED: 4,
+        CHASE_RANGE: 250, // Más corto
+        PATROL_SPEED: 1.8,
+        CHASE_SPEED: 3.5, // Menos rápido
         SMART_AI: true,
-        UPDATE_PATH_INTERVAL: 500 // ms
+        UPDATE_PATH_INTERVAL: 600 // ms - Actualizan menos frecuente
     },
 
     // Power-ups
@@ -52,10 +55,10 @@ export const CONFIG = {
         }
     },
 
-    // Banderas
+    // Banderas - MÁS VISIBLES Y ATRACTIVAS!
     FLAG: {
-        SIZE: 30,
-        BASE_POINTS: 100,
+        SIZE: 35, // Más grandes
+        BASE_POINTS: 150, // Alineado con SCORE.FLAG_BASE
         COMBO_MULTIPLIER: 1.5,
         COMBO_TIME_WINDOW: 3000, // ms
         COLORS: {
@@ -63,26 +66,26 @@ export const CONFIG = {
             GOLDEN: '#ffed4e',
             SPECIAL: '#ff00ff'
         },
-        PULSE_SPEED: 2
+        PULSE_SPEED: 2.5 // Pulsan más rápido = más atractivas
     },
 
-    // Sistema de Niveles
+    // Sistema de Niveles - BALANCEADO PARA DIVERSIÓN!
     LEVELS: {
-        1: { flags: 8, enemies: 3, powerups: 2, timeLimit: 120, name: "Rookie Drive" },
-        2: { flags: 10, enemies: 4, powerups: 3, timeLimit: 100, name: "Speed Circuit" },
-        3: { flags: 12, enemies: 5, powerups: 3, timeLimit: 90, name: "Pro Rally" },
-        4: { flags: 15, enemies: 6, powerups: 4, timeLimit: 80, name: "Champion Track" },
-        5: { flags: 18, enemies: 7, powerups: 4, timeLimit: 70, name: "Ultimate Challenge" },
-        6: { flags: 20, enemies: 8, powerups: 5, timeLimit: 60, name: "Legendary Race" }
+        1: { flags: 5, enemies: 2, powerups: 3, timeLimit: 180, name: "🌟 Tutorial Drive" },
+        2: { flags: 7, enemies: 3, powerups: 3, timeLimit: 150, name: "⚡ Speed Circuit" },
+        3: { flags: 10, enemies: 4, powerups: 4, timeLimit: 120, name: "🔥 Pro Rally" },
+        4: { flags: 12, enemies: 5, powerups: 4, timeLimit: 100, name: "💎 Champion Track" },
+        5: { flags: 15, enemies: 6, powerups: 5, timeLimit: 90, name: "👑 Ultimate Challenge" },
+        6: { flags: 18, enemies: 7, powerups: 5, timeLimit: 75, name: "🚀 Legendary Race" }
     },
 
-    // Puntuación
+    // Puntuación - MÁS GENEROSO!
     SCORE: {
-        FLAG_BASE: 100,
-        ENEMY_DODGE: 50,
-        TIME_BONUS_PER_SECOND: 10,
-        PERFECT_LEVEL: 5000,
-        COMBO_MULTIPLIERS: [1, 1.5, 2, 2.5, 3, 4, 5]
+        FLAG_BASE: 150, // Más puntos
+        ENEMY_DODGE: 75,
+        TIME_BONUS_PER_SECOND: 15,
+        PERFECT_LEVEL: 8000, // Mejor recompensa
+        COMBO_MULTIPLIERS: [1, 1.5, 2, 2.5, 3, 4, 5, 6, 7, 8] // Más niveles
     },
 
     // Audio
@@ -93,12 +96,14 @@ export const CONFIG = {
         ENABLED: true
     },
 
-    // Partículas y Efectos
+    // Partículas y Efectos - ¡MÁS EXPLOSIVO!
     PARTICLES: {
-        FLAG_COLLECT: { count: 20, color: '#ffd700', speed: 3 },
-        COLLISION: { count: 30, color: '#ff4757', speed: 5 },
-        POWERUP: { count: 15, color: '#00ff88', speed: 2 },
-        TRAIL: { maxLength: 20, fadeSpeed: 0.05 }
+        FLAG_COLLECT: { count: 40, color: '#ffd700', speed: 5 },
+        COLLISION: { count: 60, color: '#ff4757', speed: 8 },
+        POWERUP: { count: 30, color: '#00ff88', speed: 4 },
+        TRAIL: { maxLength: 30, fadeSpeed: 0.03 },
+        COMBO_MILESTONE: { count: 50, speed: 6 },
+        DASH: { count: 25, speed: 7 }
     },
 
     // UI y HUD
