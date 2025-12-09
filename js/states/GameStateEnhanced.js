@@ -551,6 +551,26 @@ export class GameStateEnhanced {
                     this.aiManager.gameState.consecutiveDeaths++;
                     this.aiManager.gameState.consecutivePerfects = 0;
 
+                    // PRIMERO: Knockback INSTANTÁNEO para evitar quedarse pegado
+                    const dx = this.player.x - enemy.x;
+                    const dy = this.player.y - enemy.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const knockbackForce = 30; // SUPER FUERTE para separación instantánea!
+
+                    // Aplicar velocidad knockback
+                    this.player.vx = (dx / dist) * knockbackForce;
+                    this.player.vy = (dy / dist) * knockbackForce;
+
+                    // EMPUJAR FÍSICAMENTE al jugador lejos INMEDIATAMENTE
+                    const pushDistance = 80; // Empujar 80px - separación garantizada
+                    this.player.x += (dx / dist) * pushDistance;
+                    this.player.y += (dy / dist) * pushDistance;
+
+                    // Asegurar que no salga de los límites
+                    this.player.x = Math.max(0, Math.min(this.player.x, CONFIG.CANVAS.WIDTH - this.player.width));
+                    this.player.y = Math.max(0, Math.min(this.player.y, CONFIG.CANVAS.HEIGHT - this.player.height));
+
+                    // DESPUÉS: Efectos visuales y sonoros
                     const playerX = this.player.x + this.player.width / 2;
                     const playerY = this.player.y + this.player.height / 2;
 
@@ -566,28 +586,10 @@ export class GameStateEnhanced {
                     // Mantener efectos originales
                     this.game.particles.explosion(playerX, playerY);
 
-                    this.screenEffects.death();
+                    // SIN freeze frame - causa sensación de "pegado en cámara lenta"
+                    // this.screenEffects.death(); // REMOVIDO
                     this.game.audio.playSound('collision');
                     this.musicEngine.triggerEvent('death');
-
-                    // Aplicar knockback FUERTE para separar del enemigo
-                    const dx = this.player.x - enemy.x;
-                    const dy = this.player.y - enemy.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                    const knockbackForce = 18; // MÁS FUERTE!
-
-                    // Aplicar velocidad knockback
-                    this.player.vx = (dx / dist) * knockbackForce;
-                    this.player.vy = (dy / dist) * knockbackForce;
-
-                    // EMPUJAR FÍSICAMENTE al jugador lejos inmediatamente
-                    const pushDistance = 40; // Empujar 40px
-                    this.player.x += (dx / dist) * pushDistance;
-                    this.player.y += (dy / dist) * pushDistance;
-
-                    // Asegurar que no salga de los límites
-                    this.player.x = Math.max(0, Math.min(this.player.x, CONFIG.CANVAS.WIDTH - this.player.width));
-                    this.player.y = Math.max(0, Math.min(this.player.y, CONFIG.CANVAS.HEIGHT - this.player.height));
 
                     // Verificar Game Over
                     if (this.player.health <= 0) {
