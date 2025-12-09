@@ -570,13 +570,24 @@ export class GameStateEnhanced {
                     this.game.audio.playSound('collision');
                     this.musicEngine.triggerEvent('death');
 
-                    // Aplicar knockback para separar del enemigo
+                    // Aplicar knockback FUERTE para separar del enemigo
                     const dx = this.player.x - enemy.x;
                     const dy = this.player.y - enemy.y;
                     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                    const knockbackForce = 8;
+                    const knockbackForce = 18; // MÁS FUERTE!
+
+                    // Aplicar velocidad knockback
                     this.player.vx = (dx / dist) * knockbackForce;
                     this.player.vy = (dy / dist) * knockbackForce;
+
+                    // EMPUJAR FÍSICAMENTE al jugador lejos inmediatamente
+                    const pushDistance = 40; // Empujar 40px
+                    this.player.x += (dx / dist) * pushDistance;
+                    this.player.y += (dy / dist) * pushDistance;
+
+                    // Asegurar que no salga de los límites
+                    this.player.x = Math.max(0, Math.min(this.player.x, CONFIG.CANVAS.WIDTH - this.player.width));
+                    this.player.y = Math.max(0, Math.min(this.player.y, CONFIG.CANVAS.HEIGHT - this.player.height));
 
                     // Verificar Game Over
                     if (this.player.health <= 0) {
